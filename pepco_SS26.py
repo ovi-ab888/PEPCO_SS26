@@ -332,12 +332,12 @@ def process_pepco_pdf(uploaded_pdf):
                         df[cur] = currency_values.get(cur, "")
                     df['PLN'] = format_number(pln_price, 'PLN')
 
-                  final_cols = [
-    "Order_ID", "Style", "Colour", "Supplier_product_code", 
-    "Item_classification", "Supplier_name", "today_date", "Collection", 
-    "Colour_SKU", "Style_Merch_Season", "Batch", "barcode", "EUR", "BGN", "BAM", 
-    "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name"
-]
+                    final_cols = [
+                        "Order_ID", "Style", "Colour", "Supplier_product_code", 
+                        "Item_classification", "Supplier_name", "today_date", "Collection", 
+                        "Colour_SKU", "Style_Merch_Season", "Batch", "barcode", "EUR", "BGN", "BAM", 
+                        "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name"
+                    ]
 
                     st.success("✅ Done!")
                     st.subheader("Edit Before Download")
