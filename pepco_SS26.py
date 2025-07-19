@@ -267,20 +267,20 @@ def extract_data_from_pdf(file):
         excluded = set(re.findall(r"barcode:\s*(\d{13});", page3))
         valid_barcodes = [b for b in all_barcodes if b not in excluded]
 
-        result = [{
-            "Order_ID": order_id.group(1).strip() if order_id else "UNKNOWN",
-            "STYLE_CODE": style_code.group() if style_code else "UNKNOWN",
-            "COLOUR": colour,
-            "Supplier_product_code": supplier_code.group(1).strip() if supplier_code else "UNKNOWN",
-            "Item_classification": item_class_value,
-            "Supplier_name": supplier_name.group(1).strip() if supplier_name else "UNKNOWN",
-            "today_date": datetime.today().strftime('%d-%m-%Y'),
-            "COLLECTION": collection_value,
-            "COLOUR_SKU": f"{colour} • SKU {sku}",
-            "STYLE": f"STYLE {style_code.group()} • {style_suffix} • Batch No./" if style_code else "STYLE UNKNOWN",
-            "Batch": f"Data e prodhimit: {batch}",
-            "barcode": barcode
-        } for sku, barcode in zip(skus, valid_barcodes)]
+     result = [{
+    "Order_ID": order_id.group(1).strip() if order_id else "UNKNOWN",
+    "Style": style_code.group() if style_code else "UNKNOWN",  # Changed from STYLE_CODE
+    "Colour": colour,  # Changed from COLOUR
+    "Supplier_product_code": supplier_code.group(1).strip() if supplier_code else "UNKNOWN",
+    "Item_classification": item_class_value,
+    "Supplier_name": supplier_name.group(1).strip() if supplier_name else "UNKNOWN",
+    "today_date": datetime.today().strftime('%d-%m-%Y'),
+    "Collection": collection_value,  # Changed from COLLECTION
+    "Colour_SKU": f"{colour} • SKU {sku}",  # Changed from COLOUR_SKU
+    "Style_Merch_Season": f"STYLE {style_code.group()} • {style_suffix} • Batch No./ " if style_code else "STYLE UNKNOWN",  # Changed from STYLE
+    "Batch": f"Data e prodhimit: {batch}",
+    "barcode": barcode
+} for sku, barcode in zip(skus, valid_barcodes)]
 
         return result
 
@@ -332,12 +332,12 @@ def process_pepco_pdf(uploaded_pdf):
                         df[cur] = currency_values.get(cur, "")
                     df['PLN'] = format_number(pln_price, 'PLN')
 
-                    final_cols = [
-                        "Order_ID", "STYLE_CODE", "COLOUR", "Supplier_product_code", 
-                        "Item_classification", "Supplier_name", "today_date", "COLLECTION", 
-                        "COLOUR_SKU", "STYLE", "Batch", "barcode", "EUR", "BGN", "BAM", 
-                        "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name"
-                    ]
+                   final_cols = [
+    "Order_ID", "Style", "Colour", "Supplier_product_code", 
+    "Item_classification", "Supplier_name", "today_date", "Collection", 
+    "Colour_SKU", "Style_Merch_Season", "Batch", "barcode", "EUR", "BGN", "BAM", 
+    "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name"
+]
 
                     st.success("✅ Done!")
                     st.subheader("Edit Before Download")
