@@ -32,7 +32,7 @@ def format_number(value, currency):
             value = float(value.replace(',', '.'))
             
         # Format currencies that use comma as decimal separator
-        if currency in ['EUR', 'BGN', 'BAM', 'RON', 'PLN', 'MKD']:
+        if currency in ['EUR', 'BGN', 'BAM', 'RON', 'PLN',]:
             formatted = f"{float(value):,.2f}".replace(".", ",")
             # Handle cases like "1,20" becoming "1,20" (correct) vs "1200,00" becoming "1.200,00"
             if ',' in formatted:
