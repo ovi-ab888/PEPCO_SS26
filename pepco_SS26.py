@@ -277,8 +277,8 @@ def extract_data_from_pdf(file):
             "today_date": datetime.today().strftime('%d-%m-%Y'),
             "COLLECTION": collection_value,
             "COLOUR_SKU": f"{colour} • SKU {sku}",
-            "STYLE": f"STYLE {style_code.group()} • {style_suffix}" if style_code else "STYLE UNKNOWN",
-            "Batch": f"Batch no. {batch}",
+            "STYLE": f"STYLE {style_code.group()} • {style_suffix} • Batch No./" if style_code else "STYLE UNKNOWN",
+            "Batch": f"Data e prodhimit: {batch}",
             "barcode": barcode
         } for sku, barcode in zip(skus, valid_barcodes)]
 
