@@ -24,42 +24,6 @@ PRICE_DATA = {
 }
 
 # ========== HELPER FUNCTIONS ==========
-def format_number(value, currency):
-    """Format number based on currency requirements"""
-    try:
-        # Convert string to float if needed
-        if isinstance(value, str):
-            value = float(value.replace(',', '.'))
-            
-        # Format currencies that use comma as decimal separator
-        if currency in ['EUR', 'BGN', 'BAM', 'RON', 'PLN',]:
-            formatted = f"{float(value):,.2f}".replace(".", ",")
-            # Handle cases like "1,20" becoming "1,20" (correct) vs "1200,00" becoming "1.200,00"
-            if ',' in formatted:
-                parts = formatted.split(',')
-                parts[0] = parts[0].replace('.', '')  # Remove thousand separators
-                formatted = ','.join(parts)
-            return formatted
-        # Format currencies that use whole numbers
-        return str(int(float(value)))
-    except (ValueError, TypeError):
-        return str(value)  # Return as-is if formatting fails
-
-def find_closest_price(pln_value):
-    try:
-        pln_value = float(pln_value)
-        closest_pln = min(PRICE_DATA['PLN'], key=lambda x: abs(x - pln_value))
-        idx = PRICE_DATA['PLN'].index(closest_pln)
-        return {
-            currency: format_number(values[idx], currency) 
-            for currency, values in PRICE_DATA.items() 
-            if currency != 'PLN'
-        }
-    except (ValueError, TypeError):
-        return None
-
-# ========== PEPCO FUNCTIONS ==========
-
 @st.cache_data(ttl=600)
 def load_product_translations():
     try:
@@ -77,14 +41,70 @@ def load_product_translations():
         st.info("Ensure the sheet is shared with 'Anyone with the link can view'")
         return pd.DataFrame()
 
-def format_product_translations(product_name, translation_row):
+@st.cache_data(ttl=600)
+def load_material_translations():
+    try:
+        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdAQmBHwDEWCgmLdEdJc0HsFYpPSyERPHLwmr2tnTYU1BDWdBD6I0ZYfEDzataX0wTNhfLfnm-Te6w/pub?gid=1096440227&single=true&output=csv"
+        df = pd.read_csv(url)
+        
+        if df.empty:
+            st.error("Material translations sheet is empty")
+            return pd.DataFrame()
+        
+        # Convert from wide to long format
+        material_translations = []
+        for _, row in df.iterrows():
+            for lang in ['AL', 'BG', 'MK', 'RS']:
+                material_translations.append({
+                    'material': row['Name'],
+                    'language': lang,
+                    'translation': row[lang]
+                })
+        
+        return pd.DataFrame(material_translations)
+        
+    except Exception as e:
+        st.error(f"Failed to load material translations: {str(e)}")
+        return pd.DataFrame()
+
+def format_number(value, currency):
+    """Format number based on currency requirements"""
+    try:
+        if isinstance(value, str):
+            value = float(value.replace(',', '.'))
+            
+        if currency in ['EUR', 'BGN', 'BAM', 'RON', 'PLN']:
+            formatted = f"{float(value):,.2f}".replace(".", ",")
+            if ',' in formatted:
+                parts = formatted.split(',')
+                parts[0] = parts[0].replace('.', '')
+                formatted = ','.join(parts)
+            return formatted
+        return str(int(float(value)))
+    except (ValueError, TypeError):
+        return str(value)
+
+def find_closest_price(pln_value):
+    try:
+        pln_value = float(pln_value)
+        closest_pln = min(PRICE_DATA['PLN'], key=lambda x: abs(x - pln_value))
+        idx = PRICE_DATA['PLN'].index(closest_pln)
+        return {
+            currency: format_number(values[idx], currency) 
+            for currency, values in PRICE_DATA.items() 
+            if currency != 'PLN'
+        }
+    except (ValueError, TypeError):
+        return None
+
+def format_product_translations(product_name, translation_row, selected_material=None, material_translations=None):
     formatted = []
     country_suffixes = {
         'BiH': " Sastav materijala na ušivenoj etiketi.",
         'RS': " Sastav materijala nalazi se na ušivenoj etiketi.",
     }
     
-   # 1. Always put EN first
+    # 1. Always put EN first
     en_text = str(translation_row['EN']) if pd.notna(translation_row.get('EN')) else product_name
     formatted.append(f"|EN| {en_text}")
     
@@ -95,26 +115,38 @@ def format_product_translations(product_name, translation_row):
               else translation_row['ES']
     }
     
-    # 3. Define the exact output order you want
+    # 3. Define the exact output order
     language_order = [
-        'AL', 'BG', 'BIH', 'CZ', 'DE', 'EE', 'ES', 
+        'AL', 'BG', 'BiH', 'CZ', 'DE', 'EE', 'ES', 
         'GR', 'HR', 'HU', 'IT', 'LT', 'LV', 'MK',
         'PL', 'PT', 'RO', 'RS', 'SI', 'SK'
     ]
     
-    # 4. Process languages in specified order
+    # 4. Process languages in order
     for lang in language_order:
         if lang in combined_languages:
-            formatted.append(f"|{lang}| {combined_languages[lang]}")
+            text = combined_languages[lang]
         elif pd.notna(translation_row.get(lang)):
-            formatted.append(f"|{lang}| {translation_row[lang]}")
+            text = translation_row[lang]
         else:
-            formatted.append(f"|{lang}| {product_name}")
+            text = product_name
+        
+        # Add material name for specific languages
+        if selected_material and material_translations and lang in ['AL', 'BG', 'MK', 'RS']:
+            material_text = material_translations.get(lang, "")
+            if material_text:
+                text = f"{text}: {material_text}"
+        
+        # Add country suffixes if needed
+        if lang in country_suffixes:
+            text += country_suffixes[lang]
+            
+        formatted.append(f"|{lang}| {text}")
     
     return " ".join(formatted)
 
+# ========== PEPCO DATA PROCESSING ==========
 COLLECTION_MAPPING = {
-    # Baby boys outerwear
     'b': {
         'CROCO CLUB': 'MODERN 1',
         'LITTLE SAILOR': 'MODERN 2',
@@ -123,26 +155,22 @@ COLLECTION_MAPPING = {
         'WESTERN SPIRIT': 'CLASSIC 1',
         'SUMMER FUN': 'CLASSIC 2'
     },
-    # Baby girls outerwear
     'a': {
         'Rainbow Girl': 'MODERN 1',
         'NEONS PICNIC': 'MODERN 2',
         'COUNTRY SIDE': 'ROMANTIC 2',
         'ESTER GARDENG': 'ROMANTIC 3'
     },
-    # Baby boys essentials
     'd': {
         'LITTLE TREASURE': 'MODERN 1',
         'DINO FRIENDS': 'CLASSIC 1',
         'EXOTIC ANIMALS': 'CLASSIC 2'
     },
-    # Baby girls essentials
     'd_girls': {
         'SWEEET PASTELS': 'MODERN 1',
         'PORCELAIN': 'ROMANTIC 2',
         'SUMMER VIBE': 'ROMANTIC 3'
     },
-    # Younger girls outerwear (from previous requirement)
     'yg': {
         'CUTE_JUMP': 'COLLECTION_1 G',
         'SWEET_HEART': 'COLLECTION_2 G',
@@ -155,7 +183,6 @@ COLLECTION_MAPPING = {
 }
 
 def get_classification_type(item_class):
-    """Determine the classification type based on item classification text"""
     if not item_class:
         return None
         
@@ -248,12 +275,10 @@ def extract_data_from_pdf(file):
         supplier_code = re.search(r"Supplier product code\s*\.{2,}\s*(.+)", page1)
         supplier_name = re.search(r"Supplier name\s*\.{2,}\s*(.+)", page1)
 
-        # Get classification and collection
         item_class_value = item_class.group(1).strip() if item_class else "UNKNOWN"
         class_type = get_classification_type(item_class_value)
         collection_value = collection.group(1).split("-")[0].strip() if collection else "UNKNOWN"
 
-        # Apply collection transformation
         if class_type and class_type in COLLECTION_MAPPING:
             for orig_collection, new_collection in COLLECTION_MAPPING[class_type].items():
                 if orig_collection.upper() in collection_value.upper():
@@ -269,15 +294,15 @@ def extract_data_from_pdf(file):
 
         result = [{
             "Order_ID": order_id.group(1).strip() if order_id else "UNKNOWN",
-            "Style": style_code.group() if style_code else "UNKNOWN",  # Changed from STYLE_CODE
-            "Colour": colour,  # Changed from COLOUR
+            "Style": style_code.group() if style_code else "UNKNOWN",
+            "Colour": colour,
             "Supplier_product_code": supplier_code.group(1).strip() if supplier_code else "UNKNOWN",
             "Item_classification": item_class_value,
             "Supplier_name": supplier_name.group(1).strip() if supplier_name else "UNKNOWN",
             "today_date": datetime.today().strftime('%d-%m-%Y'),
-            "Collection": collection_value,  # Changed from COLLECTION
-            "Colour_SKU": f"{colour} • SKU {sku}",  # Changed from COLOUR_SKU
-            "Style_Merch_Season": f"STYLE {style_code.group()} • {style_suffix} • Batch No./ " if style_code else "STYLE UNKNOWN",  # Changed from STYLE
+            "Collection": collection_value,
+            "Colour_SKU": f"{colour} • SKU {sku}",
+            "Style_Merch_Season": f"STYLE {style_code.group()} • {style_suffix} • Batch No./ " if style_code else "STYLE UNKNOWN",
             "Batch": f"Data e prodhimit: {batch}",
             "barcode": barcode
         } for sku, barcode in zip(skus, valid_barcodes)]
@@ -290,6 +315,7 @@ def extract_data_from_pdf(file):
 
 def process_pepco_pdf(uploaded_pdf):
     translations_df = load_product_translations()
+    material_translations_df = load_material_translations()
     
     if uploaded_pdf and not translations_df.empty:
         result_data = extract_data_from_pdf(uploaded_pdf)
@@ -309,11 +335,43 @@ def process_pepco_pdf(uploaded_pdf):
                 options=products,
                 key="pepco_product_select"
             )
+            
+            # Material selection
+            if not material_translations_df.empty:
+                materials = material_translations_df['material'].dropna().unique().tolist()
+                selected_materials = st.multiselect(
+                    "Select Material(s)",
+                    options=materials,
+                    key="pepco_material_select"
+                )
+                
+                # Prepare material translations dictionary
+                material_trans_dict = {}
+                for lang in ['AL', 'BG', 'MK', 'RS']:
+                    trans_list = []
+                    for material in selected_materials:
+                        trans = material_translations_df[
+                            (material_translations_df['material'] == material) & 
+                            (material_translations_df['language'] == lang)
+                        ]
+                        if not trans.empty:
+                            trans_list.append(trans['translation'].iloc[0])
+                    if trans_list:
+                        material_trans_dict[lang] = ", ".join(trans_list)
+            else:
+                selected_materials = None
+                material_trans_dict = None
 
             df = pd.DataFrame(result_data)
             product_row = filtered[filtered['PRODUCT_NAME'] == product_type]
+            
             if not product_row.empty:
-                df['product_name'] = format_product_translations(product_type, product_row.iloc[0])
+                df['product_name'] = format_product_translations(
+                    product_type,
+                    product_row.iloc[0],
+                    selected_materials,
+                    material_trans_dict
+                )
             else:
                 df['product_name'] = ""
 
@@ -357,219 +415,10 @@ def process_pepco_pdf(uploaded_pdf):
                         mime="text/csv"
                     )
 
-# ========== PEP&CO FUNCTIONS ==========
-
-def extract_story(page1_text):
-    match = re.search(r"Story\s+(.+)", page1_text)
-    return match.group(1).split("-")[0].strip() if match else "UNKNOWN"
-
-def extract_pack_details(text):
-    details = {}
-    order = re.search(r"Order Number\s+(\d+)", text)
-    details["Order_Number"] = order.group(1).strip() if order else "UNKNOWN"
-
-    supplier = re.search(r"Supplier name\s+([^\n]+)", text)
-    details["Supplier_name"] = supplier.group(1).strip() if supplier else "UNKNOWN"
-
-    handover = re.search(r"Handover Date\s+(\d{4}-\d{2}-\d{2})", text)
-    details["Handover_Date"] = handover.group(1) if handover else None
-
-    sku_match = re.search(r"\b(\d{6})\b", text)
-    details["Pack_SKU"] = sku_match.group(1) if sku_match else "UNKNOWN"
-
-    barcode_match = re.search(r"\b(\d{13})\b", text)
-    details["Pack_Barcode"] = barcode_match.group(1) if barcode_match else "UNKNOWN"
-
-    return details
-
-def extract_table_from_page2(page2_text):
-    try:
-        lines = [line.strip() for line in page2_text.splitlines() if line.strip()]
-        
-        # Find the starting point of the table data
-        data_start = None
-        for i, line in enumerate(lines):
-            if re.match(r"^\d{6}$", line):  # Looking for a 6-digit SKU
-                data_start = i
-                break
-                
-        if data_start is None:
-            st.warning("⚠️ Could not find table start in page 2")
-            return []
-        
-        entries = []
-        while data_start + 6 < len(lines):  # Reduced from 10 to 6 for safety
-            try:
-                sku = lines[data_start]
-                desc = lines[data_start + 1]
-                barcode = lines[data_start + 2]
-                style = lines[data_start + 6]
-                
-                # Validation checks
-                if (re.match(r"^\d{6}$", sku) and 
-                    re.match(r"^\d{13}$", barcode) and 
-                    re.match(r"^\d{6}$", style)):
-                    
-                    clean_desc = desc.split(":")[0].strip() if ":" in desc else desc.strip()
-                    entries.append({
-                        "sku": sku,
-                        "sku_description": clean_desc,
-                        "barcode": barcode,
-                        "style": style
-                    })
-                    data_start += 11  # Move to next entry
-                else:
-                    data_start += 1  # Move forward slowly if validation fails
-                    
-            except IndexError:
-                break  # Reached end of lines
-                
-        if not entries:
-            st.warning("⚠️ No valid entries found in the table")
-            
-        return entries
-        
-    except Exception as e:
-        st.error(f"Error extracting table: {str(e)}")
-        return []
-
-def process_pep_and_co_pdf(uploaded_file):
-    try:
-        doc = fitz.open(stream=uploaded_file.read(), filetype="pdf")
-        if len(doc) < 2:
-            st.error("❌ PDF must have at least 2 pages.")
-            return None
-
-        story_text = doc[0].get_text()
-        page2_text = doc[1].get_text()
-
-        story = extract_story(story_text)
-        details = extract_pack_details(story_text)
-        entries = extract_table_from_page2(page2_text)
-
-        if not entries:
-            st.error("❌ No product entries found in the PDF")
-            return None
-
-        # Initialize variables to store processed data
-        processed_df = None
-
-        with st.form("pepandco_form"):
-            colour = st.text_input("Enter Colour:", key="pepandco_colour")
-            sku_description_input = st.text_input("Enter Description:", key="pepandco_description")
-
-            group_options = [
-                "KIDSWEAR / BABY CLOTHING",
-                "KIDSWEAR / KIDS CLOTHING",
-                "MENSWEAR / MENS CLOTHING",
-                "WOMENSWEAR / WOMENS CLOTHING",
-                "KIDSWEAR / BABY ESSENTIALS",
-                "KIDSWEAR / KIDS ESSENTIALS",
-                "MENSWEAR / MENS ESSENTIALS",
-                "WOMENSWEAR / WOMENS ESSENTIALS"
-            ]
-            selected_group = st.selectbox(
-                "Select Department", 
-                options=group_options,
-                key="pepandco_department"
-            )
-
-            batch_options = ["Order Number", "Handover Date"]
-            batch_choice = st.selectbox(
-                "Select Batch Source", 
-                options=batch_options,
-                key="pepandco_batch_source"
-            )
-
-            if st.form_submit_button("Process Data"):
-                if not colour or not sku_description_input:
-                    st.error("❌ Please enter both colour and description")
-                    return None
-
-                processed_data = []
-                for entry in entries:
-                    if batch_choice == "Order Number":
-                        batch_info = f"Batch no. {details['Order_Number']}"
-                    else:
-                        try:
-                            handover_date = datetime.strptime(details["Handover_Date"], "%Y-%m-%d")
-                            batch_date = handover_date - timedelta(days=20)
-                            batch_info = f"Batch no. {batch_date.strftime('%m%Y')}"
-                        except:
-                            batch_info = "Batch no. UNKNOWN"
-
-                    # Add the new sku_description_2 field with (Ratio Packs)
-                    sku_description_2 = f"{sku_description_input} (Ratio Packs)"
-
-                    processed_data.append({
-                        "Order_Number": details.get("Order_Number", "UNKNOWN"),
-                        "Supplier_name": details.get("Supplier_name", "UNKNOWN"),
-                        "today_date": datetime.today().strftime('%d/%m/%Y'),
-                        "Pack_SKU": details.get("Pack_SKU", "UNKNOWN"),
-                        "Pack_Barcode": details.get("Pack_Barcode", "UNKNOWN"),
-                        "Department": selected_group,
-                        "story": story,
-                        "sku_description": sku_description_input,
-                        "sku_description_2": sku_description_2,  # New field added
-                        "COLOUR_SKU": f"{colour} • SKU {entry['sku']}",
-                        "STYLE": f"STYLE {entry['style']} • H/W26",
-                        "STYLE_code": entry['style'],
-                        "Batch": batch_info,
-                        "barcode": entry['barcode'],
-                        "colour": colour
-                    })
-
-                processed_df = pd.DataFrame(processed_data)[[
-                    "Order_Number", "Supplier_name", "today_date",
-                    "Pack_SKU", "Pack_Barcode", "Department",
-                    "story", "sku_description", "sku_description_2",  # Include new field
-                    "COLOUR_SKU", "STYLE", "STYLE_code", 
-                    "Batch", "barcode", "colour"
-                ]]
-
-        # Display results and download button outside the form
-        if processed_df is not None:
-            st.success("✅ Processing complete!")
-            st.subheader("Edit Before Download")
-            edited_df = st.data_editor(processed_df)
-
-            csv_buffer = StringIO()
-            edited_df.to_csv(csv_buffer, sep=';', quoting=csv.QUOTE_ALL, index=False)
-            
-            st.download_button(
-                "📥 Download CSV",
-                csv_buffer.getvalue().encode('utf-8-sig'),
-                file_name=f"pepco_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                mime="text/csv"
-            )
-                
-    except Exception as e:
-        st.error(f"❌ An error occurred: {str(e)}")
-        return None
-
-
 # ========== MAIN APP ==========
 def main():
-    st.title("PEPCO/PEP&CO Data Processor")
-
-    # Initialize session state for brand selection
-    if 'selected_brand' not in st.session_state:
-        st.session_state.selected_brand = "PEPCO"
-
-    # Create a container for the radio buttons
-    with st.container():
-        brand = st.radio(
-            "Select Brand",
-            ("PEPCO", "PEP&CO"),
-            key="main_brand_selector",
-            index=0 if st.session_state.selected_brand == "PEPCO" else 1
-        )
-        st.session_state.selected_brand = brand
-
-    if brand == "PEPCO":
-        pepco_section()
-    else:
-        pepandco_section()
+    st.title("PEPCO Data Processor")
+    pepco_section()
 
 def pepco_section():
     st.subheader("PEPCO Data Processing")
@@ -580,16 +429,6 @@ def pepco_section():
     )
     if uploaded_pdf:
         process_pepco_pdf(uploaded_pdf)
-
-def pepandco_section():
-    st.subheader("PEP&CO Data Processing")
-    uploaded_file = st.file_uploader(
-        "Upload PEP&CO PDF",
-        type="pdf",
-        key="pepandco_unique_uploader"
-    )
-    if uploaded_file:
-        process_pep_and_co_pdf(uploaded_file)
 
 if __name__ == "__main__":
     main()
