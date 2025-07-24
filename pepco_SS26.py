@@ -24,7 +24,7 @@ PRICE_DATA = {
 }
 
 # ========== HELPER FUNCTIONS ==========
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=60)
 def load_product_translations():
     try:
         sheet_id = "1ue68TSJQQedKa7sVBB4syOc0OXJNaLS7p9vSnV52mKA"
