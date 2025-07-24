@@ -10,6 +10,25 @@ from datetime import datetime, timedelta
 import os
 import requests.utils
 
+# ========== WASHING CODE MAPPING ==========
+WASHING_CODES = {
+    '1': '১২৩৪৫',
+    '2': '১৪৭৮৫',
+    '3': '৩৬৯৮৫',
+    '4': '২৫৮৯৬',
+    '5': '৩২১৪৫',
+    '6': '৪৫৬৯৮',
+    '7': '৭৮৯৪৫',
+    '8': '৫৮৯৬৫',
+    '9': '৫৮৭৪৫',
+    '10': '০৩২১৪',
+    '11': '০১৪৭৮',
+    '12': '৯৬৩০২',
+    '13': '৮৫২০১',
+    '14': '৭৪১৯৬',
+    '15': '২০১০৫'
+}
+
 # ========== PRICE DATA (For PEPCO) ==========
 PRICE_DATA = {
     'PLN': [0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.2, 1.3, 1.5, 1.8, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 12, 14, 15, 17, 18, 20, 22, 25, 27, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 250],
@@ -362,6 +381,13 @@ def process_pepco_pdf(uploaded_pdf):
                 selected_materials = None
                 material_trans_dict = None
 
+            # Washing code selection (simplified to show only code numbers)
+            washing_code = st.selectbox(
+                "Select Washing Code",
+                options=list(WASHING_CODES.keys()),
+                key="pepco_washing_code"
+            )
+
             df = pd.DataFrame(result_data)
             product_row = filtered[filtered['PRODUCT_NAME'] == product_type]
             
@@ -374,6 +400,9 @@ def process_pepco_pdf(uploaded_pdf):
                 )
             else:
                 df['product_name'] = ""
+
+            # Add washing code to the dataframe
+            df['washing_code'] = WASHING_CODES[washing_code]
 
             pln_price = st.number_input(
                 "Enter PLN Price",
@@ -393,8 +422,8 @@ def process_pepco_pdf(uploaded_pdf):
                     final_cols = [
                         "Order_ID", "Style", "Colour", "Supplier_product_code", 
                         "Item_classification", "Supplier_name", "today_date", "Collection", 
-                        "Colour_SKU", "Style_Merch_Season", "Batch", "barcode", "EUR", "BGN", "BAM", 
-                        "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name"
+                        "Colour_SKU", "Style_Merch_Season", "Batch", "barcode", "washing_code",
+                        "EUR", "BGN", "BAM", "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name"
                     ]
 
                     st.success("✅ Done!")
