@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 import os
 import requests.utils
 
-# ========== WASHING CODE MAPPING ==========
+# ========== CONSTANTS AND MAPPINGS ==========
 WASHING_CODES = {
     '1': '১২৩৪৫',
     '2': '১৪৭৮৫',
@@ -29,7 +29,6 @@ WASHING_CODES = {
     '15': '২০১০৫'
 }
 
-# ========== PRICE DATA (For PEPCO) ==========
 PRICE_DATA = {
     'PLN': [0.15, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.2, 1.3, 1.5, 1.8, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 12, 14, 15, 17, 18, 20, 22, 25, 27, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 250],
     'EUR': [0.05, 0.05, 0.1, 0.1, 0.1, 0.15, 0.2, 0.2, 0.25, 0.25, 0.35, 0.4, 0.4, 0.45, 0.5, 0.65, 0.8, 0.9, 1, 1.2, 1.3, 1.5, 1.8, 2, 2.3, 2.5, 3, 3.5, 4, 4.5, 4.5, 5, 5.5, 6, 6.5, 7, 9, 10, 11, 12, 14, 15, 16, 17, 19, 20, 22, 23, 24, 25, 28, 30, 33, 35, 38, 40, 43, 45, 48, 50, 53],
@@ -40,6 +39,42 @@ PRICE_DATA = {
     'RSD': [5, 5, 10, 15, 15, 20, 20, 25, 30, 30, 40, 45, 50, 50, 60, 70, 90, 100, 120, 130, 150, 180, 200, 250, 270, 300, 350, 400, 450, 550, 570, 600, 650, 700, 800, 900, 1000, 1200, 1300, 1500, 1600, 1700, 1800, 2000, 2200, 2500, 2500, 2600, 2800, 3000, 3300, 3600, 4000, 4500, 5000, 5300, 5600, 5900, 6200, 6500, 6700],
     'HUF': [12, 25, 35, 35, 45, 55, 60, 65, 75, 100, 120, 130, 150, 180, 200, 250, 300, 350, 400, 430, 500, 550, 650, 750, 850, 1000, 1200, 1400, 1500, 1600, 1700, 1800, 2000, 2500, 2700, 2900, 3200, 3600, 4000, 4500, 4800, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 8500, 9000, 9500, 10000, 11000, 12000, 13000, 14000, 15000, 16000, 17000, 18000, 25000],
     'MKD': [3, 3, 6, 6, 6, 9, 12, 12, 15, 15, 21, 24, 24, 27, 30, 39, 48, 54, 60, 72, 78, 90, 108, 120, 138, 150, 180, 210, 240, 270, 270, 300, 330, 360, 390, 420, 540, 600, 660, 720, 840, 900, 960, 1020, 1140, 1200, 1320, 1380, 1440, 1500, 1680, 1800, 1980, 2100, 2280, 2400, 2580, 2700, 2880, 3000, 3180],
+}
+
+COLLECTION_MAPPING = {
+    'b': {
+        'CROCO CLUB': 'MODERN 1',
+        'LITTLE SAILOR': 'MODERN 2',
+        'EXPLORE THE WORLD': 'MODERN 3',
+        'JURASIC ADVENTURE': 'MODERN 4',
+        'WESTERN SPIRIT': 'CLASSIC 1',
+        'SUMMER FUN': 'CLASSIC 2'
+    },
+    'a': {
+        'Rainbow Girl': 'MODERN 1',
+        'NEONS PICNIC': 'MODERN 2',
+        'COUNTRY SIDE': 'ROMANTIC 2',
+        'ESTER GARDENG': 'ROMANTIC 3'
+    },
+    'd': {
+        'LITTLE TREASURE': 'MODERN 1',
+        'DINO FRIENDS': 'CLASSIC 1',
+        'EXOTIC ANIMALS': 'CLASSIC 2'
+    },
+    'd_girls': {
+        'SWEEET PASTELS': 'MODERN 1',
+        'PORCELAIN': 'ROMANTIC 2',
+        'SUMMER VIBE': 'ROMANTIC 3'
+    },
+    'yg': {
+        'CUTE_JUMP': 'COLLECTION_1 G',
+        'SWEET_HEART': 'COLLECTION_2 G',
+        'DAISY': 'COLLECTION_3 G',
+        'SPECIAL OCC': 'COLLECTION_4 G',
+        'LILALOV': 'COLLECTION_5 G',
+        'COOL GIRL': 'COLLECTION_6 G',
+        'DEL MAR': 'COLLECTION_7 G'
+    }
 }
 
 # ========== HELPER FUNCTIONS ==========
@@ -116,14 +151,14 @@ def find_closest_price(pln_value):
     except (ValueError, TypeError):
         return None
 
-def format_product_translations(product_name, translation_row, selected_material=None, material_translations=None):
+def format_product_translations(product_name, translation_row, selected_materials=None, material_translations=None):
     formatted = []
     country_suffixes = {
         'BiH': " Sastav materijala na ušivenoj etiketi.",
         'RS': " Sastav materijala nalazi se na ušivenoj etiketi.",
     }
     
-    # 1. Always put EN first
+    # 1. Always put EN first (without full stop)
     en_text = str(translation_row['EN']) if pd.notna(translation_row.get('EN')) else product_name
     formatted.append(f"|EN| {en_text}")
     
@@ -151,55 +186,21 @@ def format_product_translations(product_name, translation_row, selected_material
             text = product_name
         
         # Add material name for specific languages
-        if selected_material and material_translations and lang in ['AL', 'BG', 'MK', 'RS']:
+        if selected_materials and material_translations and lang in ['AL', 'BG', 'MK', 'RS']:
             material_text = material_translations.get(lang, "")
             if material_text:
                 text = f"{text}: {material_text}"
         
-        # Add country suffixes if needed
+        # Special handling for BiH and RS
         if lang in country_suffixes:
+            if not text.endswith('.'):
+                text += "."
             text += country_suffixes[lang]
+        # No full stop for other languages
             
         formatted.append(f"|{lang}| {text}")
     
     return " ".join(formatted)
-
-# ========== PEPCO DATA PROCESSING ==========
-COLLECTION_MAPPING = {
-    'b': {
-        'CROCO CLUB': 'MODERN 1',
-        'LITTLE SAILOR': 'MODERN 2',
-        'EXPLORE THE WORLD': 'MODERN 3',
-        'JURASIC ADVENTURE': 'MODERN 4',
-        'WESTERN SPIRIT': 'CLASSIC 1',
-        'SUMMER FUN': 'CLASSIC 2'
-    },
-    'a': {
-        'Rainbow Girl': 'MODERN 1',
-        'NEONS PICNIC': 'MODERN 2',
-        'COUNTRY SIDE': 'ROMANTIC 2',
-        'ESTER GARDENG': 'ROMANTIC 3'
-    },
-    'd': {
-        'LITTLE TREASURE': 'MODERN 1',
-        'DINO FRIENDS': 'CLASSIC 1',
-        'EXOTIC ANIMALS': 'CLASSIC 2'
-    },
-    'd_girls': {
-        'SWEEET PASTELS': 'MODERN 1',
-        'PORCELAIN': 'ROMANTIC 2',
-        'SUMMER VIBE': 'ROMANTIC 3'
-    },
-    'yg': {
-        'CUTE_JUMP': 'COLLECTION_1 G',
-        'SWEET_HEART': 'COLLECTION_2 G',
-        'DAISY': 'COLLECTION_3 G',
-        'SPECIAL OCC': 'COLLECTION_4 G',
-        'LILALOV': 'COLLECTION_5 G',
-        'COOL GIRL': 'COLLECTION_6 G',
-        'DEL MAR': 'COLLECTION_7 G'
-    }
-}
 
 def get_classification_type(item_class):
     if not item_class:
@@ -217,7 +218,48 @@ def get_classification_type(item_class):
         return 'd'
     elif 'baby girls essentials' in item_class:
         return 'd_girls'
+    elif 'younger boys outerwear' in item_class:
+        return 'yg'
+    elif 'older girls outerwear' in item_class:
+        return 'yg'
+    elif 'older boys outerwear' in item_class:
+        return 'yg'
+    elif 'ladies outerwear' in item_class:
+        return 'a'
+    elif 'mens outerwear' in item_class:
+        return 'b'
     return None
+
+def get_dept_value(item_class):
+    if not item_class:
+        return ""
+        
+    item_class = item_class.lower()
+    
+    if any(x in item_class for x in ['baby boys outerwear', 'baby girls outerwear', 
+                                    'baby boys essentials', 'baby girls essentials']):
+        return "BABY"
+    elif any(x in item_class for x in ['younger boys outerwear', 'younger girls outerwear']):
+        return "KIDS"
+    elif any(x in item_class for x in ['older girls outerwear', 'older boys outerwear']):
+        return "TEENS"
+    elif 'ladies outerwear' in item_class:
+        return "WOMEN"
+    elif 'mens outerwear' in item_class:
+        return "MEN"
+    return ""
+
+def modify_collection(collection, item_class):
+    if not item_class:
+        return collection
+        
+    item_class = item_class.lower()
+    
+    if any(x in item_class for x in ['younger boys outerwear', 'older boys outerwear']):
+        return f"{collection} B"
+    elif any(x in item_class for x in ['older girls outerwear', 'younger girls outerwear']):
+        return f"{collection} G"
+    return collection
 
 def extract_colour_from_page2(text, page_number=1):
     try:
@@ -364,6 +406,9 @@ def process_pepco_pdf(uploaded_pdf):
                     key="pepco_material_select"
                 )
                 
+                # Check if Cotton is selected
+                cotton_value = "Y" if "Cotton" in selected_materials else ""
+                
                 # Prepare material translations dictionary
                 material_trans_dict = {}
                 for lang in ['AL', 'BG', 'MK', 'RS']:
@@ -380,8 +425,9 @@ def process_pepco_pdf(uploaded_pdf):
             else:
                 selected_materials = None
                 material_trans_dict = None
+                cotton_value = ""
 
-            # Washing code selection (simplified to show only code numbers)
+            # Washing code selection
             washing_code = st.selectbox(
                 "Select Washing Code",
                 options=list(WASHING_CODES.keys()),
@@ -389,6 +435,16 @@ def process_pepco_pdf(uploaded_pdf):
             )
 
             df = pd.DataFrame(result_data)
+            
+            # Add Dept column based on Item classification
+            df['Dept'] = df['Item_classification'].apply(get_dept_value)
+            
+            # Add Cotton column
+            df['Cotton'] = cotton_value
+            
+            # Modify Collection field
+            df['Collection'] = df.apply(lambda row: modify_collection(row['Collection'], row['Item_classification']), axis=1)
+            
             product_row = filtered[filtered['PRODUCT_NAME'] == product_type]
             
             if not product_row.empty:
@@ -423,17 +479,18 @@ def process_pepco_pdf(uploaded_pdf):
                         "Order_ID", "Style", "Colour", "Supplier_product_code", 
                         "Item_classification", "Supplier_name", "today_date", "Collection", 
                         "Colour_SKU", "Style_Merch_Season", "Batch", "barcode", "washing_code",
-                        "EUR", "BGN", "BAM", "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name"
+                        "EUR", "BGN", "BAM", "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name",
+                        "Dept", "Cotton"
                     ]
 
                     st.success("✅ Done!")
                     st.subheader("Edit Before Download")
 
-                    edited_df = st.data_editor(df)
+                    edited_df = st.data_editor(df[final_cols])
 
                     csv_buffer = StringIO()
                     writer = pycsv.writer(csv_buffer, delimiter=';', quoting=pycsv.QUOTE_ALL)
-                    writer.writerow(edited_df.columns)
+                    writer.writerow(final_cols)
                     for row in edited_df.itertuples(index=False):
                         writer.writerow(row)
 
@@ -445,10 +502,6 @@ def process_pepco_pdf(uploaded_pdf):
                     )
 
 # ========== MAIN APP ==========
-def main():
-    st.title("PEPCO Data Processor")
-    pepco_section()
-
 def pepco_section():
     st.subheader("PEPCO Data Processing")
     uploaded_pdf = st.file_uploader(
@@ -458,6 +511,10 @@ def pepco_section():
     )
     if uploaded_pdf:
         process_pepco_pdf(uploaded_pdf)
+
+def main():
+    st.title("PEPCO Data Processor")
+    pepco_section()
 
 if __name__ == "__main__":
     main()
