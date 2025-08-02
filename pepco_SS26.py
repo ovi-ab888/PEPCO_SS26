@@ -80,15 +80,13 @@ def load_price_data():
         for currency in df.columns:
             price_data[currency] = df[currency].dropna().tolist()
         
-        st.write("Available PLN values in sheet:", sorted(price_data['PLN']))
-        
         return price_data
         
     except Exception as e:
         st.error(f"Failed to load price data: {str(e)}")
         return None
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=600) 
 def load_product_translations():
     try:
         sheet_id = "1ue68TSJQQedKa7sVBB4syOc0OXJNaLS7p9vSnV52mKA"
@@ -150,7 +148,7 @@ def find_closest_price(pln_value):
     try:
         price_data = load_price_data()
         if not price_data or 'PLN' not in price_data:
-            st.error("Price data not available")
+            st.error("❌ Price data not available")
             return None
             
         pln_value = float(pln_value)
@@ -479,7 +477,7 @@ def process_pepco_pdf(uploaded_pdf):
 
             df['washing_code'] = WASHING_CODES[washing_code]
 
-            pln_price = st.number_input(
+           pln_price = st.number_input(
                 "Enter PLN Price",
                 min_value=0.0,
                 step=0.01,
@@ -490,14 +488,16 @@ def process_pepco_pdf(uploaded_pdf):
             if pln_price:
                 currency_values = find_closest_price(pln_price)
                 
-                if not currency_values:
-                    currency_values = get_manual_prices()
-                
-                if currency_values:
+                if currency_values:  # Only proceed if price was found
+                    df = pd.DataFrame(result_data)
+                    
+                    # Add all the currency columns
                     for cur in ['EUR', 'BGN', 'BAM', 'RON', 'CZK', 'MKD', 'RSD', 'HUF']:
                         df[cur] = currency_values.get(cur, "")
                     df['PLN'] = format_number(pln_price, 'PLN')
-
+                    
+                    # ... [Rest of your processing code remains unchanged]
+                    
                     final_cols = [
                         "Order_ID", "Style", "Colour", "Supplier_product_code", 
                         "Item_classification", "Supplier_name", "today_date", "Collection", 
@@ -523,6 +523,8 @@ def process_pepco_pdf(uploaded_pdf):
                         file_name=f"{os.path.splitext(uploaded_pdf.name)[0]}.csv",
                         mime="text/csv"
                     )
+                else:
+                    st.warning("Processing stopped - valid PLN price not found")
 
 def pepco_section():
     st.subheader("PEPCO Data Processing")
@@ -543,3 +545,4 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
