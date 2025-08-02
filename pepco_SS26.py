@@ -66,44 +66,23 @@ COLLECTION_MAPPING = {
 }
 
 # ========== HELPER FUNCTIONS ==========
-@st.cache_data(ttl=600)  # Cache for 10 minutes
-def load_price_data():
-    try:
-        # This is the public URL for your Google Sheets price data
-        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdAQmBHwDEWCgmLdEdJc0HsFYpPSyERPHLwmr2tnTYU1BDWdBD6I0ZYfEDzataX0wTNhfLfnm-Te6w/pub?gid=583402611&single=true&output=csv"
-        
-        # Load the data from Google Sheets
-        df = pd.read_csv(url)
-        
-        if df.empty:
-            st.error("Price data sheet is empty")
-            return None
-            
-        # Convert the dataframe to our required format
-        price_data = {}
-        for currency in df.columns:  # Include all columns
-            price_data[currency] = df[currency].dropna().tolist()
-        
-        return price_data
-        
-    except Exception as e:
-        st.error(f"Failed to load price data: {str(e)}")
-        st.info("Please check your internet connection and ensure the Google Sheet is publicly accessible")
-        return None
-
 def find_closest_price(pln_value):
     try:
         price_data = load_price_data()
         if not price_data or 'PLN' not in price_data:
+            st.error("Price data not available")
             return None
             
         pln_value = float(pln_value)
+        available_pln_values = price_data['PLN']
         
-        # Find the closest PLN value in the table
-        closest_pln = min(price_data['PLN'], key=lambda x: abs(x - pln_value))
-        idx = price_data['PLN'].index(closest_pln)
+        # Check if exact PLN value exists in sheet
+        if pln_value not in available_pln_values:
+            st.error(f"❌ PLN {pln_value} not found in price sheet. Available PLN values: {sorted(available_pln_values)}")
+            return None
+            
+        idx = available_pln_values.index(pln_value)
         
-        # Return all currency values for that row
         return {
             currency: format_number(values[idx], currency) 
             for currency, values in price_data.items() 
@@ -112,7 +91,6 @@ def find_closest_price(pln_value):
     except (ValueError, TypeError) as e:
         st.error(f"Invalid price value: {str(e)}")
         return None
-
 @st.cache_data(ttl=600)
 def load_product_translations():
     try:
@@ -583,4 +561,5 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
