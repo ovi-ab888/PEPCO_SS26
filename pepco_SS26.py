@@ -80,7 +80,6 @@ def load_price_data():
         for currency in df.columns:
             price_data[currency] = df[currency].dropna().tolist()
         
-        # Debug: Show available PLN values
         st.write("Available PLN values in sheet:", sorted(price_data['PLN']))
         
         return price_data
@@ -89,7 +88,7 @@ def load_price_data():
         st.error(f"Failed to load price data: {str(e)}")
         return None
 
-@st.cache_data(ttl=600) 
+@st.cache_data(ttl=600)
 def load_product_translations():
     try:
         sheet_id = "1ue68TSJQQedKa7sVBB4syOc0OXJNaLS7p9vSnV52mKA"
@@ -131,6 +130,7 @@ def load_material_translations():
         return pd.DataFrame()
 
 def format_number(value, currency):
+    """Format number based on currency requirements"""
     try:
         if isinstance(value, str):
             value = float(value.replace(',', '.'))
@@ -156,7 +156,6 @@ def find_closest_price(pln_value):
         pln_value = float(pln_value)
         available_pln_values = price_data['PLN']
         
-        # Strict check - only use exact matches
         if pln_value not in available_pln_values:
             st.error(f"❌ PLN {pln_value} not found in price sheet. Available PLN values: {sorted(available_pln_values)}")
             return None
@@ -195,25 +194,21 @@ def format_product_translations(product_name, translation_row, selected_material
         'RS': " Sastav materijala nalazi se na ušivenoj etiketi.",
     }
     
-    # 1. Always put EN first (without full stop)
     en_text = str(translation_row['EN']) if pd.notna(translation_row.get('EN')) else product_name
     formatted.append(f"|EN| {en_text}")
     
-    # 2. Define languages that need special handling
     combined_languages = {
         'ES': f"{translation_row['ES']} / {translation_row['ES_CA']}" 
               if pd.notna(translation_row.get('ES_CA')) 
               else translation_row['ES']
     }
     
-    # 3. Define the exact output order
     language_order = [
         'AL', 'BG', 'BiH', 'CZ', 'DE', 'EE', 'ES', 
         'GR', 'HR', 'HU', 'IT', 'LT', 'LV', 'MK',
         'PL', 'PT', 'RO', 'RS', 'SI', 'SK'
     ]
     
-    # 4. Process languages in order
     for lang in language_order:
         if lang in combined_languages:
             text = combined_languages[lang]
@@ -222,18 +217,15 @@ def format_product_translations(product_name, translation_row, selected_material
         else:
             text = product_name
         
-        # Add material name for specific languages
         if selected_materials and material_translations and lang in ['AL', 'BG', 'MK', 'RS']:
             material_text = material_translations.get(lang, "")
             if material_text:
                 text = f"{text}: {material_text}"
         
-        # Special handling for BiH and RS
         if lang in country_suffixes:
             if not text.endswith('.'):
                 text += "."
             text += country_suffixes[lang]
-        # No full stop for other languages
             
         formatted.append(f"|{lang}| {text}")
     
@@ -434,7 +426,6 @@ def process_pepco_pdf(uploaded_pdf):
                 key="pepco_product_select"
             )
             
-            # Material selection
             if not material_translations_df.empty:
                 materials = material_translations_df['material'].dropna().unique().tolist()
                 selected_materials = st.multiselect(
@@ -443,10 +434,8 @@ def process_pepco_pdf(uploaded_pdf):
                     key="pepco_material_select"
                 )
                 
-                # Check if Cotton is selected
                 cotton_value = "Y" if "Cotton" in selected_materials else ""
                 
-                # Prepare material translations dictionary
                 material_trans_dict = {}
                 for lang in ['AL', 'BG', 'MK', 'RS']:
                     trans_list = []
@@ -464,7 +453,6 @@ def process_pepco_pdf(uploaded_pdf):
                 material_trans_dict = None
                 cotton_value = ""
 
-            # Washing code selection
             washing_code = st.selectbox(
                 "Select Washing Code",
                 options=list(WASHING_CODES.keys()),
@@ -473,13 +461,8 @@ def process_pepco_pdf(uploaded_pdf):
 
             df = pd.DataFrame(result_data)
             
-            # Add Dept column based on Item classification
             df['Dept'] = df['Item_classification'].apply(get_dept_value)
-            
-            # Add Cotton column
             df['Cotton'] = cotton_value
-            
-            # Modify Collection field
             df['Collection'] = df.apply(lambda row: modify_collection(row['Collection'], row['Item_classification']), axis=1)
             
             product_row = filtered[filtered['PRODUCT_NAME'] == product_type]
@@ -494,10 +477,9 @@ def process_pepco_pdf(uploaded_pdf):
             else:
                 df['product_name'] = ""
 
-            # Add washing code to the dataframe
             df['washing_code'] = WASHING_CODES[washing_code]
 
-             pln_price = st.number_input(
+            pln_price = st.number_input(
                 "Enter PLN Price",
                 min_value=0.0,
                 step=0.01,
@@ -506,11 +488,9 @@ def process_pepco_pdf(uploaded_pdf):
             )
             
             if pln_price:
-                # Try to get prices from Google Sheet
                 currency_values = find_closest_price(pln_price)
                 
                 if not currency_values:
-                    # If exact PLN not found or sheet unavailable, show manual input
                     currency_values = get_manual_prices()
                 
                 if currency_values:
@@ -544,7 +524,6 @@ def process_pepco_pdf(uploaded_pdf):
                         mime="text/csv"
                     )
 
-# ========== MAIN APP ==========
 def pepco_section():
     st.subheader("PEPCO Data Processing")
     uploaded_pdf = st.file_uploader(
@@ -564,6 +543,3 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
-
-
-
