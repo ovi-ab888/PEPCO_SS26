@@ -167,6 +167,23 @@ def find_closest_price(pln_value):
     except (ValueError, TypeError):
         return None
 
+def get_manual_prices():
+    """Get manual price inputs from user"""
+    st.warning("⚠️ Price data sheet not available. Please enter prices manually:")
+    
+    currencies = ['EUR', 'BGN', 'BAM', 'RON', 'CZK', 'MKD', 'RSD', 'HUF']
+    manual_prices = {}
+    
+    cols = st.columns(4)
+    for i, currency in enumerate(currencies):
+        with cols[i % 4]:
+            manual_prices[currency] = st.text_input(
+                f"{currency} Price",
+                key=f"manual_{currency}"
+            )
+    
+    return manual_prices
+
 def format_product_translations(product_name, translation_row, selected_materials=None, material_translations=None):
     formatted = []
     country_suffixes = {
@@ -485,7 +502,13 @@ def process_pepco_pdf(uploaded_pdf):
             )
             
             if pln_price:
+                # Try to get prices from Google Sheet first
                 currency_values = find_closest_price(pln_price)
+                
+                if not currency_values:
+                    # If Google Sheet not available, get manual prices
+                    currency_values = get_manual_prices()
+                
                 if currency_values:
                     for cur in ['EUR', 'BGN', 'BAM', 'RON', 'CZK', 'MKD', 'RSD', 'HUF']:
                         df[cur] = currency_values.get(cur, "")
