@@ -477,7 +477,7 @@ def process_pepco_pdf(uploaded_pdf):
 
             df['washing_code'] = WASHING_CODES[washing_code]
 
-           pln_price = st.number_input(
+            pln_price = st.number_input(
                 "Enter PLN Price",
                 min_value=0.0,
                 step=0.01,
@@ -488,16 +488,11 @@ def process_pepco_pdf(uploaded_pdf):
             if pln_price:
                 currency_values = find_closest_price(pln_price)
                 
-                if currency_values:  # Only proceed if price was found
-                    df = pd.DataFrame(result_data)
-                    
-                    # Add all the currency columns
+                if currency_values:
                     for cur in ['EUR', 'BGN', 'BAM', 'RON', 'CZK', 'MKD', 'RSD', 'HUF']:
                         df[cur] = currency_values.get(cur, "")
                     df['PLN'] = format_number(pln_price, 'PLN')
-                    
-                    # ... [Rest of your processing code remains unchanged]
-                    
+
                     final_cols = [
                         "Order_ID", "Style", "Colour", "Supplier_product_code", 
                         "Item_classification", "Supplier_name", "today_date", "Collection", 
@@ -545,4 +540,5 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
