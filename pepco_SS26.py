@@ -66,10 +66,13 @@ COLLECTION_MAPPING = {
 }
 
 # ========== HELPER FUNCTIONS ==========
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=600)  # Cache for 10 minutes
 def load_price_data():
     try:
+        # This is the public URL for your Google Sheets price data
         url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdAQmBHwDEWCgmLdEdJc0HsFYpPSyERPHLwmr2tnTYU1BDWdBD6I0ZYfEDzataX0wTNhfLfnm-Te6w/pub?gid=583402611&single=true&output=csv"
+        
+        # Load the data from Google Sheets
         df = pd.read_csv(url)
         
         if df.empty:
@@ -78,16 +81,36 @@ def load_price_data():
             
         # Convert the dataframe to our required format
         price_data = {}
-        for currency in df.columns[1:]:  # Skip first column (PLN)
+        for currency in df.columns:  # Include all columns
             price_data[currency] = df[currency].dropna().tolist()
-        
-        # Add PLN values separately
-        price_data['PLN'] = df['PLN'].dropna().tolist()
         
         return price_data
         
     except Exception as e:
         st.error(f"Failed to load price data: {str(e)}")
+        st.info("Please check your internet connection and ensure the Google Sheet is publicly accessible")
+        return None
+
+def find_closest_price(pln_value):
+    try:
+        price_data = load_price_data()
+        if not price_data or 'PLN' not in price_data:
+            return None
+            
+        pln_value = float(pln_value)
+        
+        # Find the closest PLN value in the table
+        closest_pln = min(price_data['PLN'], key=lambda x: abs(x - pln_value))
+        idx = price_data['PLN'].index(closest_pln)
+        
+        # Return all currency values for that row
+        return {
+            currency: format_number(values[idx], currency) 
+            for currency, values in price_data.items() 
+            if currency != 'PLN'
+        }
+    except (ValueError, TypeError) as e:
+        st.error(f"Invalid price value: {str(e)}")
         return None
 
 @st.cache_data(ttl=600)
@@ -560,3 +583,4 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
