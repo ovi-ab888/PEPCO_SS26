@@ -66,32 +66,30 @@ COLLECTION_MAPPING = {
 }
 
 # ========== HELPER FUNCTIONS ==========
-def find_closest_price(pln_value):
-    try:
-        price_data = load_price_data()
-        if not price_data or 'PLN' not in price_data:
-            st.error("Price data not available")
-            return None
-            
-        pln_value = float(pln_value)
-        available_pln_values = price_data['PLN']
-        
-        # Check if exact PLN value exists in sheet
-        if pln_value not in available_pln_values:
-            st.error(f"❌ PLN {pln_value} not found in price sheet. Available PLN values: {sorted(available_pln_values)}")
-            return None
-            
-        idx = available_pln_values.index(pln_value)
-        
-        return {
-            currency: format_number(values[idx], currency) 
-            for currency, values in price_data.items() 
-            if currency != 'PLN'
-        }
-    except (ValueError, TypeError) as e:
-        st.error(f"Invalid price value: {str(e)}")
-        return None
 @st.cache_data(ttl=600)
+def load_price_data():
+    try:
+        url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdAQmBHwDEWCgmLdEdJc0HsFYpPSyERPHLwmr2tnTYU1BDWdBD6I0ZYfEDzataX0wTNhfLfnm-Te6w/pub?gid=583402611&single=true&output=csv"
+        df = pd.read_csv(url)
+        
+        if df.empty:
+            st.error("Price data sheet is empty")
+            return None
+            
+        price_data = {}
+        for currency in df.columns:
+            price_data[currency] = df[currency].dropna().tolist()
+        
+        # Debug: Show available PLN values
+        st.write("Available PLN values in sheet:", sorted(price_data['PLN']))
+        
+        return price_data
+        
+    except Exception as e:
+        st.error(f"Failed to load price data: {str(e)}")
+        return None
+
+@st.cache_data(ttl=600) 
 def load_product_translations():
     try:
         sheet_id = "1ue68TSJQQedKa7sVBB4syOc0OXJNaLS7p9vSnV52mKA"
@@ -101,11 +99,10 @@ def load_product_translations():
         
         df = pd.read_csv(url)
         if df.empty:
-            st.error("Loaded translations but the sheet appears empty")
+            st.error("Loaded translations but sheet appears empty")
         return df
     except Exception as e:
-        st.error(f"❌ Failed to load translations. Please check: {str(e)}")
-        st.info("Ensure the sheet is shared with 'Anyone with the link can view'")
+        st.error(f"❌ Failed to load translations: {str(e)}")
         return pd.DataFrame()
 
 @st.cache_data(ttl=600)
@@ -118,7 +115,6 @@ def load_material_translations():
             st.error("Material translations sheet is empty")
             return pd.DataFrame()
         
-        # Convert from wide to long format
         material_translations = []
         for _, row in df.iterrows():
             for lang in ['AL', 'BG', 'MK', 'RS']:
@@ -135,7 +131,6 @@ def load_material_translations():
         return pd.DataFrame()
 
 def format_number(value, currency):
-    """Format number based on currency requirements"""
     try:
         if isinstance(value, str):
             value = float(value.replace(',', '.'))
@@ -154,23 +149,31 @@ def format_number(value, currency):
 def find_closest_price(pln_value):
     try:
         price_data = load_price_data()
-        if not price_data:
+        if not price_data or 'PLN' not in price_data:
+            st.error("Price data not available")
             return None
             
         pln_value = float(pln_value)
-        closest_pln = min(price_data['PLN'], key=lambda x: abs(x - pln_value))
-        idx = price_data['PLN'].index(closest_pln)
+        available_pln_values = price_data['PLN']
+        
+        # Strict check - only use exact matches
+        if pln_value not in available_pln_values:
+            st.error(f"❌ PLN {pln_value} not found in price sheet. Available PLN values: {sorted(available_pln_values)}")
+            return None
+            
+        idx = available_pln_values.index(pln_value)
+        
         return {
             currency: format_number(values[idx], currency) 
             for currency, values in price_data.items() 
             if currency != 'PLN'
         }
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
+        st.error(f"Invalid price value: {str(e)}")
         return None
 
 def get_manual_prices():
-    """Get manual price inputs from user"""
-    st.warning("⚠️ Price data sheet not available. Please enter prices manually:")
+    st.warning("⚠️ Please enter prices manually:")
     
     currencies = ['EUR', 'BGN', 'BAM', 'RON', 'CZK', 'MKD', 'RSD', 'HUF']
     manual_prices = {}
@@ -494,7 +497,7 @@ def process_pepco_pdf(uploaded_pdf):
             # Add washing code to the dataframe
             df['washing_code'] = WASHING_CODES[washing_code]
 
-            pln_price = st.number_input(
+             pln_price = st.number_input(
                 "Enter PLN Price",
                 min_value=0.0,
                 step=0.01,
@@ -503,11 +506,11 @@ def process_pepco_pdf(uploaded_pdf):
             )
             
             if pln_price:
-                # Try to get prices from Google Sheet first
+                # Try to get prices from Google Sheet
                 currency_values = find_closest_price(pln_price)
                 
                 if not currency_values:
-                    # If Google Sheet not available, get manual prices
+                    # If exact PLN not found or sheet unavailable, show manual input
                     currency_values = get_manual_prices()
                 
                 if currency_values:
@@ -561,5 +564,6 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
