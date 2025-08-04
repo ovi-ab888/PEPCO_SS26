@@ -390,7 +390,7 @@ def extract_data_from_pdf(file):
             "today_date": datetime.today().strftime('%d-%m-%Y'),
             "Collection": collection_value,
             "Colour_SKU": f"{colour} • SKU {sku}",
-            "Style_Merch_Season": f"STYLE {style_code.group()} • {style_suffix} • Batch No./ " if style_code else "STYLE UNKNOWN",
+            "Style_Merch_Season": f"STYLE {style_code.group()} • {style_suffix} • Batch No./" if style_code else "STYLE UNKNOWN",
             "Batch": f"Data e prodhimit: {batch}",
             "barcode": barcode
         } for sku, barcode in zip(skus, valid_barcodes)]
@@ -540,5 +540,6 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
