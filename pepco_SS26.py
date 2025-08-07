@@ -10,36 +10,6 @@ from datetime import datetime, timedelta
 import os
 import requests.utils
 
-import streamlit as st
-
-# লগিন ফাংশন
-def check_login(username, password):
-    return username == "admin" and password == "1234"  # আপনার ক্রেডেনশিয়ালস
-
-# মেইন অ্যাপ
-def main_app():
-    st.title("সিকিউর কন্টেন্ট")
-    st.write("কেবল অথেন্টিকেটেড ইউজারদের জন্য!")
-
-# সেশন স্টেট ইনিশিয়ালাইজেশন
-if "logged_in" not in st.session_state:
-    st.session_state.logged_in = False
-
-# লগিন পেজ শো করান
-if not st.session_state.logged_in:
-    st.title("লগিন করুন")
-    username = st.text_input("ইউজারনেম")
-    password = st.text_input("পাসওয়ার্ড", type="password")
-    
-    if st.button("লগিন"):
-        if check_login(username, password):
-            st.session_state.logged_in = True
-            st.rerun()  # পেজ রিফ্রেশ ফোর্স করুন
-        else:
-            st.error("ক্রেডেনশিয়ালস ভুল!")
-else:
-    main_app()  # লগিন成功 হলে মেইন অ্যাপ শো করুন
-
 # ========== CONSTANTS AND MAPPINGS ==========
 WASHING_CODES = {
     '1': '১২৩৪৫',
@@ -570,6 +540,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
