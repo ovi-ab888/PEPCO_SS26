@@ -14,10 +14,10 @@ import requests.utils
 WASHING_CODES = {
     '1': '১২৩৪৫',
     '2': '১৪৭৮৫',
-    '3': '৩৬৯৮৫',
-    '4': '২৫৮৯৬',
-    '5': '৩২১৪৫',
-    '6': '৪৫৬৯৮',
+    '3': 'djnst',
+    '4': 'djnpt',
+    '5': 'djnqt',
+    '6': 'djnqt',
     '7': 'gjnpt',
     '8': 'gjnpu',
     '9': 'gjnqt',
@@ -26,7 +26,7 @@ WASHING_CODES = {
     '12': 'ijnsu',
     '13': 'ijnpu',
     '14': 'ijnsv',
-    '15': '২০১০৫'
+    '15': 'djnsw'
 }
 
 COLLECTION_MAPPING = {
@@ -540,6 +540,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
