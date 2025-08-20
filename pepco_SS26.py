@@ -506,71 +506,40 @@ def process_pepco_pdf(uploaded_pdf):
 
                     edited_df = st.data_editor(df[final_cols])
 
-# ================== PDF PARSING HELPERS (abbrev for brevity) ==================
-# ... (the rest of your existing parsing and UI code remains unchanged) ...
+                    csv_buffer = StringIO()
+                    writer = pycsv.writer(csv_buffer, delimiter=';', quoting=pycsv.QUOTE_ALL)
+                    writer.writerow(final_cols)
+                    for row in edited_df.itertuples(index=False):
+                        writer.writerow(row)
 
+                    st.download_button(
+                        "📥 Download CSV",
+                        csv_buffer.getvalue().encode('utf-8-sig'),
+                        file_name=f"{os.path.splitext(uploaded_pdf.name)[0]}.csv",
+                        mime="text/csv"
+                    )
+                else:
+                    st.warning("Processing stopped - valid PLN price not found")
 
-# ================== MAIN APP ==================
-def app():
-st.title("PEPCO Order Support — SS26")
+def pepco_section():
+    st.subheader("PEPCO Data Processing")
+    uploaded_pdf = st.file_uploader(
+        "Upload PEPCO Data file",
+        type=["pdf"],
+        key="pepco_unique_uploader"
+    )
+    if uploaded_pdf:
+        process_pepco_pdf(uploaded_pdf)
 
+def main():
+    st.title("PEPCO Data Processor")
+    pepco_section()
 
-uploaded_pdf = st.file_uploader("Upload Order PDF", type=["pdf"])
+if __name__ == "__main__":
+    main()
 
-
-if uploaded_pdf:
-# ... your earlier extraction/translations logic ...
-# Assume df and final_cols computed, plus selected_dept exists
-proceed = st.button("Proceed to Review and Download")
-if proceed:
-st.subheader("Edit Before Download")
-edited_df = st.data_editor(df[final_cols])
-
-
-# ======== DOWNLOAD SECTION (CSV + XLSX) ========
-from io import BytesIO
-
-
-# CSV
-csv_str = edited_df.to_csv(
-index=False,
-sep=",",
-quoting=pycsv.QUOTE_MINIMAL,
-lineterminator="\r\n"
-)
-csv_bytes = csv_str.encode("utf-8-sig")
-
-
-# XLSX
-xlsx_buf = BytesIO()
-with pd.ExcelWriter(xlsx_buf, engine="xlsxwriter") as writer:
-df_x = edited_df.copy()
-for col in ["barcode", "Colour_SKU", "Supplier_product_code"]:
-if col in df_x.columns:
-df_x[col] = df_x[col].astype(str)
-df_x.to_excel(writer, index=False, sheet_name="OrderSup")
-workbook = writer.book
-worksheet = writer.sheets["OrderSup"]
-text_fmt = workbook.add_format({"num_format": "@"})
-if "barcode" in df_x.columns:
-col_idx = df_x.columns.get_loc("barcode")
-worksheet.set_column(col_idx, col_idx, 20, text_fmt)
-xlsx_bytes = xlsx_buf.getvalue()
-
-
-# File names
-base_name = os.path.splitext(uploaded_pdf.name)[0]
-dept = (edited_df["Dept"].iloc[0] if "Dept" in edited_df.columns else selected_dept).replace(" ", "_")
-style_val = str(edited_df["Style"].iloc[0]) if "Style" in edited_df.columns else "NA"
-csv_name = f"{base_name}_{dept}_{style_val}.csv"
-xlsx_name = f"{base_name}_{dept}_{style_val}.xlsx"
-
-
-# Show download buttons
-st.markdown("### Download Files")
-st.download_button(
-
-
+st.markdown("---")
+st.caption("This app developed by Ovi")
 
 
 
