@@ -507,26 +507,36 @@ def process_pepco_pdf(uploaded_pdf):
 
                     edited_df = st.data_editor(df[final_cols])
 
-csv_bytes = df.to_csv(
-    index=False,
-    sep=",",                 # জোর করে কমা
-    quoting=csv.QUOTE_MINIMAL,
-    lineterminator="\r\n",   # Windows/Excel-safe newlines
-    encoding="utf-8"         # NOTE: to_csv returns str; we'll encode below
-)
+output = BytesIO()
+with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
+    # বারকোড/যে কলামগুলোকে টেক্সট রাখতে চান আগে str-এ কাস্ট করে দিন
+    df_x = df.copy()
+    for col in ["barcode", "Colour_SKU", "Supplier_product_code"]:
+        if col in df_x.columns:
+            df_x[col] = df_x[col].astype(str)
 
-csv_data = csv_bytes.encode("utf-8-sig")  # BOM যোগ করি যাতে Excel UTF-8 ঠিকমতো পড়ে
+    df_x.to_excel(writer, index=False, sheet_name="OrderSup")
+
+    # ঐচ্ছিক: বারকোড কলামকে টেক্সট ফরম্যাট
+    workbook  = writer.book
+    worksheet = writer.sheets["OrderSup"]
+    text_fmt  = workbook.add_format({"num_format": "@"})
+    if "barcode" in df_x.columns:
+        col_idx = df_x.columns.get_loc("barcode")
+        worksheet.set_column(col_idx, col_idx, 20, text_fmt)  # width + text
+
+xlsx_data = output.getvalue()
 
 base_name = os.path.splitext(uploaded_pdf.name)[0]
 dept = selected_dept.replace(" ", "_")
 style = df['Style'].iloc[0] if 'Style' in df.columns else "NA"
-download_name = f"{base_name}_{dept}_{style}.csv"
+download_name = f"{base_name}_{dept}_{style}.xlsx"
 
 st.download_button(
-    label="📥 Download CSV",
-    data=csv_data,
+    label="📥 Download Excel (.xlsx)",
+    data=xlsx_data,
     file_name=download_name,
-    mime="text/csv"
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 )
 
 def pepco_section():
@@ -548,6 +558,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
