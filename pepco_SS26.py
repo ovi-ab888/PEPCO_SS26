@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-sob import streamlit as st
+import streamlit as st
 import fitz  # PyMuPDF
 import pandas as pd
 import re
@@ -158,14 +158,13 @@ def app():
             edited_df = st.data_editor(df[final_cols])
 
             # ======== DOWNLOAD BUTTON (FIXED FOR EXCEL) ========
-            # Build CSV in Excel-friendly way
             csv_str = edited_df.to_csv(
                 index=False,
                 sep=",",
                 quoting=pycsv.QUOTE_MINIMAL,
                 lineterminator="\r\n"
             )
-            csv_bytes = csv_str.encode("utf-8-sig")  # add BOM for Excel UTF-8
+            csv_bytes = csv_str.encode("utf-8-sig")  # BOM for Excel
 
             base_name = os.path.splitext(uploaded_pdf.name)[0]
             dept = (edited_df["Dept"].iloc[0] if "Dept" in edited_df.columns else selected_dept).replace(" ", "_")
