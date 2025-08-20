@@ -508,56 +508,41 @@ def process_pepco_pdf(uploaded_pdf):
 
 # ======== DOWNLOAD BUTTONS (CSV + XLSX, Excel-friendly) ========
 # Build CSV: use comma delimiter + UTF-8 BOM so Excel splits columns correctly
-csv_str = edited_df.to_csv(
-    index=False,
-    sep=",",
-    quoting=pycsv.QUOTE_MINIMAL,
-    lineterminator="\r\n"
-)
-csv_bytes = csv_str.encode("utf-8-sig")  # BOM for Excel
+proceed = st.button("Proceed to Review and Download")
+if proceed:
+    st.subheader("Preview & Edit Before Download")
+    edited_df = st.data_editor(df[final_cols])
 
-# Also build native Excel (.xlsx) to avoid delimiter/leading-zero issues
-from io import BytesIO
-xlsx_buf = BytesIO()
-with pd.ExcelWriter(xlsx_buf, engine="xlsxwriter") as writer:
-    df_x = edited_df.copy()
-    # Keep ID-like columns as text so Excel doesn't drop leading zeros
-    for col in ["barcode", "Colour_SKU", "Supplier_product_code"]:
-        if col in df_x.columns:
-            df_x[col] = df_x[col].astype(str)
-    df_x.to_excel(writer, index=False, sheet_name="OrderSup")
-    # Format barcode column explicitly as text
-    workbook  = writer.book
-    worksheet = writer.sheets["OrderSup"]
-    text_fmt  = workbook.add_format({"num_format": "@"})
-    if "barcode" in df_x.columns:
-        cidx = df_x.columns.get_loc("barcode")
-        worksheet.set_column(cidx, cidx, 20, text_fmt)
-xlsx_bytes = xlsx_buf.getvalue()
+    # ======== DOWNLOAD BUTTONS (Excel-friendly) ========
+    from io import BytesIO
+    xlsx_buf = BytesIO()
+    with pd.ExcelWriter(xlsx_buf, engine="xlsxwriter") as writer:
+        df_x = edited_df.copy()
+        for col in ["barcode", "Colour_SKU", "Supplier_product_code"]:
+            if col in df_x.columns:
+                df_x[col] = df_x[col].astype(str)
+        df_x.to_excel(writer, index=False, sheet_name="OrderSup")
+        workbook  = writer.book
+        worksheet = writer.sheets["OrderSup"]
+        text_fmt  = workbook.add_format({"num_format": "@"})
+        if "barcode" in df_x.columns:
+            cidx = df_x.columns.get_loc("barcode")
+            worksheet.set_column(cidx, cidx, 20, text_fmt)
+    xlsx_bytes = xlsx_buf.getvalue()
 
-# Dynamic filenames: <PDFname>_<Dept>_<Style>.<ext>
-base_name = os.path.splitext(uploaded_pdf.name)[0]
-dept = (edited_df["Dept"].iloc[0] if "Dept" in edited_df.columns else selected_dept).replace(" ", "_")
-style_val = str(edited_df["Style"].iloc[0]) if "Style" in edited_df.columns else "NA"
-csv_name  = f"{base_name}_{dept}_{style_val}.csv"
-xlsx_name = f"{base_name}_{dept}_{style_val}.xlsx"
+    base_name = os.path.splitext(uploaded_pdf.name)[0]
+    dept = (edited_df["Dept"].iloc[0] if "Dept" in edited_df.columns else selected_dept).replace(" ", "_")
+    style_val = str(edited_df["Style"].iloc[0]) if "Style" in edited_df.columns else "NA"
+    xlsx_name = f"{base_name}_{dept}_{style_val}.xlsx"
 
-# Two side-by-side buttons
-c1, c2 = st.columns(2)
-with c1:
-    st.download_button(
-        label="📥 Download CSV",
-        data=csv_bytes,
-        file_name=csv_name,
-        mime="text/csv"
-    )
-with c2:
     st.download_button(
         label="📊 Download Excel (.xlsx)",
         data=xlsx_bytes,
         file_name=xlsx_name,
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="dl_xlsx"
     )
+
 # ======== END DOWNLOAD SECTION ========
 
 
@@ -580,6 +565,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
