@@ -5,6 +5,7 @@ import pandas as pd
 import re
 import csv
 from io import StringIO
+from io import BytesIO
 import csv as pycsv
 from datetime import datetime, timedelta
 import os
@@ -506,18 +507,27 @@ def process_pepco_pdf(uploaded_pdf):
 
                     edited_df = st.data_editor(df[final_cols])
 
-                    csv_buffer = StringIO()
-                    writer = pycsv.writer(csv_buffer, delimiter=';', quoting=pycsv.QUOTE_ALL)
-                    writer.writerow(final_cols)
-                    for row in edited_df.itertuples(index=False):
-                        writer.writerow(row)
+csv_bytes = df.to_csv(
+    index=False,
+    sep=",",                 # জোর করে কমা
+    quoting=csv.QUOTE_MINIMAL,
+    lineterminator="\r\n",   # Windows/Excel-safe newlines
+    encoding="utf-8"         # NOTE: to_csv returns str; we'll encode below
+)
 
-                    st.download_button(
-                        "📥 Download CSV",
-                        csv_buffer.getvalue().encode('utf-8-sig'),
-                        file_name=f"{os.path.splitext(uploaded_pdf.name)[0]}.csv",
-                        mime="text/csv"
-                    )
+csv_data = csv_bytes.encode("utf-8-sig")  # BOM যোগ করি যাতে Excel UTF-8 ঠিকমতো পড়ে
+
+base_name = os.path.splitext(uploaded_pdf.name)[0]
+dept = selected_dept.replace(" ", "_")
+style = df['Style'].iloc[0] if 'Style' in df.columns else "NA"
+download_name = f"{base_name}_{dept}_{style}.csv"
+
+st.download_button(
+    label="📥 Download CSV",
+    data=csv_data,
+    file_name=download_name,
+    mime="text/csv"
+)
                 else:
                     st.warning("Processing stopped - valid PLN price not found")
 
@@ -540,6 +550,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
