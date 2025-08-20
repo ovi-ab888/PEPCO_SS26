@@ -528,8 +528,6 @@ st.download_button(
     file_name=download_name,
     mime="text/csv"
 )
-                else:
-                    st.warning("Processing stopped - valid PLN price not found")
 
 def pepco_section():
     st.subheader("PEPCO Data Processing")
@@ -550,6 +548,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
