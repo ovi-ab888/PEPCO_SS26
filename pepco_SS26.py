@@ -204,13 +204,13 @@ COLLECTION_MAPPING = {
         'SUMMER VIBE': 'ROMANTIC 3'
     },
     'yg': {
-        'CUTE_JUMP': 'COLLECTION_1 G',
-        'SWEET_HEART': 'COLLECTION_2 G',
-        'DAISY': 'COLLECTION_3 G',
-        'SPECIAL OCC': 'COLLECTION_4 G',
-        'LILALOV': 'COLLECTION_5 G',
-        'COOL GIRL': 'COLLECTION_6 G',
-        'DEL MAR': 'COLLECTION_7 G'
+        'CUTE_JUMP': 'COLLECTION_1',
+        'SWEET_HEART': 'COLLECTION_2',
+        'DAISY': 'COLLECTION_3',
+        'SPECIAL OCC': 'COLLECTION_4',
+        'LILALOV': 'COLLECTION_5',
+        'COOL GIRL': 'COLLECTION_6',
+        'DEL MAR': 'COLLECTION_7'
     }
 }
 
@@ -799,6 +799,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
