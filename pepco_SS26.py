@@ -12,7 +12,7 @@ if os.path.exists(LOGO_PNG):
 elif os.path.exists(LOGO_SVG):
     page_icon = LOGO_SVG   # note: kichu browser svg favicon na-o dekhate pare
 else:
-    page_icon = "🧾"
+    page_icon = "🏷️"
 
 # Header: logo + title
 left, right = st.columns([3, 10], vertical_alignment="center")
@@ -799,6 +799,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
