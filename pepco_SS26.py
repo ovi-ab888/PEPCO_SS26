@@ -1,4 +1,4 @@
-# --- Page setup + local logo ---
+# ==================== LOGO ====================
 import os
 import streamlit as st
 
@@ -23,8 +23,9 @@ with left:
         st.image(LOGO_PNG, width=300)
     else:
         st.markdown("<div style='font-size:40px'>🧾</div>", unsafe_allow_html=True)
+        
 
-
+# ==================== PASSWORD ====================
 
 # -*- coding: utf-8 -*-
 import streamlit as st
@@ -66,6 +67,7 @@ def check_password():
     return False
 # --- End password gate ---
 
+# ==================== import ====================
 
 import fitz  # PyMuPDF
 import pandas as pd
@@ -80,7 +82,7 @@ import requests.utils
 
 
 
-
+# ==================== PAGE layout ====================
 
 import streamlit as st
 
@@ -154,7 +156,8 @@ st.markdown(THEME_CSS, unsafe_allow_html=True)
 
 
 
-# ========== CONSTANTS AND MAPPINGS ==========
+# ========== WASHING_CODES MAPPINGS ==========
+
 WASHING_CODES = {
     '1': '১২৩৪৫',
     '2': '১৪৭৮৫',
@@ -172,6 +175,8 @@ WASHING_CODES = {
     '14': 'ijnsv',
     '15': 'djnsw'
 }
+
+# ========== COLLECTION_MAPPING ==========
 
 COLLECTION_MAPPING = {
     'b': {
@@ -209,7 +214,8 @@ COLLECTION_MAPPING = {
     }
 }
 
-# ========== HELPER FUNCTIONS ==========
+# ==================== HELPER FUNCTIONS ====================
+
 @st.cache_data(ttl=600)
 def load_price_data():
     try:
@@ -586,6 +592,8 @@ def extract_data_from_pdf(file):
         st.error(f"PDF error: {str(e)}")
         return None
 
+
+
 def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
     translations_df = load_product_translations()
     material_translations_df = load_material_translations()
@@ -778,10 +786,10 @@ def pepco_section():
         process_pepco_pdf(primary_pdf, extra_order_ids=concatenated_ids)
 
 
-
+# ==================== MAIN APP ====================
 
 def main():
-    st.title("PEPCO Data Processor")
+    st.title("PEPCO Automation App")
     if not check_password():
         st.stop()
     pepco_section()
@@ -791,6 +799,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
