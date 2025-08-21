@@ -49,11 +49,10 @@ import os
 import requests.utils
 
 st.set_page_config(page_title="PEPCO Data Processor", page_icon="🧾", layout="wide")
-
-# ⬇️ GitHub hide — set_page_config-এর ঠিক পরেই
-from pepco_ui_hide_github_strict import hide_github
-hide_github()                 # শুধু GitHub আইকন/লিংক লুকায়
-# hide_github(True)   
+from pepco_ui_hide_github import hide_github
+hide_github()          # শুধু GitHub hide
+# hide_github(True)    # পুরো toolbar hide করতে চাইলে
+  
 
 # ========== CONSTANTS AND MAPPINGS ==========
 WASHING_CODES = {
@@ -692,6 +691,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
