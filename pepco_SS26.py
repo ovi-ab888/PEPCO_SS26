@@ -80,22 +80,7 @@ import requests.utils
 
 
 
-st.set_page_config(page_title="PEPCO Data Processor", page_icon="🧾", layout="wide")
-st.markdown("""
-<style>
-/* Hide GitHub link/icon across header, toolbar, and overflow menu */
-header[data-testid="stHeader"] a[href*="github.com"] { display: none !important; }
-div[data-testid="stToolbar"] a[href*="github.com"]   { display: none !important; }
-div[data-testid="stToolbar"] a[title*="GitHub"]      { display: none !important; }
-div[data-testid="stToolbar"] button[title*="GitHub"] { display: none !important; }
-div[data-testid="stToolbar"] a[aria-label*="GitHub"] { display: none !important; }
-ul[role="menu"] a[href*="github.com"]                { display: none !important; } /* overflow menu */
-div[data-testid="stToolbar"] { right: 0.5rem; } /* optional nudge */
-</style>
-""", unsafe_allow_html=True)
-from pepco_ui_hide_github import hide_github
-hide_github()          # শুধু GitHub hide
-# hide_github(True)    # পুরো toolbar hide করতে চাইলে
+
 
 import streamlit as st
 
@@ -806,6 +791,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
