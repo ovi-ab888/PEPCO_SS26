@@ -32,7 +32,6 @@ with left:
 
 with right:
     st.markdown("<h1 style='margin-bottom:0'>PEPCO Data Processor</h1>", unsafe_allow_html=True)
-    st.caption("Internal tool • v26")
 
 
 
@@ -816,6 +815,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
