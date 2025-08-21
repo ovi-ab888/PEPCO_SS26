@@ -1,3 +1,41 @@
+# --- Page setup + local logo ---
+import os
+import streamlit as st
+
+# repo root e rakha logo gulo
+LOGO_PNG = "logo.png"   # (thakle use korbo)
+LOGO_SVG = "logo.svg"   # tumi jeita add korecho
+
+# Favicon/tab icon: png > svg > emoji
+if os.path.exists(LOGO_PNG):
+    page_icon = LOGO_PNG
+elif os.path.exists(LOGO_SVG):
+    page_icon = LOGO_SVG   # note: kichu browser svg favicon na-o dekhate pare
+else:
+    page_icon = "🧾"
+
+st.set_page_config(
+    page_title="PEPCO Data Processor",
+    page_icon=page_icon,
+    layout="wide",
+)
+
+# Header: logo + title
+left, right = st.columns([1, 10], vertical_alignment="center")
+with left:
+    if os.path.exists(LOGO_SVG):
+        st.image(LOGO_SVG, width=52)       # prefer svg in header
+    elif os.path.exists(LOGO_PNG):
+        st.image(LOGO_PNG, width=52)
+    else:
+        st.markdown("<div style='font-size:40px'>🧾</div>", unsafe_allow_html=True)
+
+with right:
+    st.markdown("<h1 style='margin-bottom:0'>PEPCO Data Processor</h1>", unsafe_allow_html=True)
+    st.caption("Internal tool • v26")
+
+
+
 # -*- coding: utf-8 -*-
 import streamlit as st
 
@@ -38,6 +76,7 @@ def check_password():
     return False
 # --- End password gate ---
 
+
 import fitz  # PyMuPDF
 import pandas as pd
 import re
@@ -47,28 +86,6 @@ import csv as pycsv
 from datetime import datetime, timedelta
 import os
 import requests.utils
-
-
-import streamlit as st
-
-# 1) Page config + favicon (logo as URL)
-LOGO_URL = "https://brandfetch.com/pepco.pl?library=default&collection=logos&asset=iddVHvFsYB"
-
-st.set_page_config(
-    page_title="PEPCO Data Processor",
-    page_icon=LOGO_URL,   # ✅ favicon/tab icon from your URL
-    layout="wide"
-)
-
-# (optional) your CSS/theme goes here ...
-
-# 2) Header area: logo + title side-by-side
-left, right = st.columns([1, 10], vertical_alignment="center")
-with left:
-    st.image(LOGO_URL, width=48)  # 48–64 px usually looks nice
-with right:
-    st.markdown("<h1 style='margin-bottom:0'>PEPCO Data Processor</h1>", unsafe_allow_html=True)
-    st.caption("Internal tool • v26")
 
 
 
@@ -799,6 +816,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
