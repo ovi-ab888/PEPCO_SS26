@@ -330,11 +330,10 @@ def extract_colour_from_page2(text, page_number=1):
 
 def extract_order_id_only(file):
     """
-    Return the Order_ID found on page 1 ("Order - ID .... <id>"), else None.
-    The regex is lenient to allow underscores/suffixes like _01.
+    Extract only Order_ID from the first page: matches "Order - ID .... <ID>".
+    Returns the string or None.
     """
     try:
-        # Ensure pointer at start
         try:
             file.seek(0)
         except Exception:
@@ -347,7 +346,6 @@ def extract_order_id_only(file):
                 pass
             return None
         page1 = doc[0].get_text()
-        # Allow letters/digits/underscore/plus/hyphen suffixes
         m = re.search(r"Order\s*-\s*ID\s*\.{2,}\s*([A-Z0-9_+-]+)", page1, re.IGNORECASE)
         try:
             file.seek(0)
@@ -490,9 +488,11 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
                 key="pepco_washing_code"
             )
 
-                        df = pd.DataFrame(result_data)
+            df = pd.DataFrame(result_data)
+            
 
             if extra_order_ids:
+
                 df['Order_ID'] = df['Order_ID'].astype(str) + "+" + extra_order_ids
 
             df['Dept'] = df['Item_classification'].apply(get_dept_value)
@@ -529,7 +529,8 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
                         df[cur] = currency_values.get(cur, "")
                     df['PLN'] = format_number(pln_price, 'PLN')
 
-                    final_cols = ["Order_ID", "Style", "Colour", "Supplier_product_code", 
+                    final_cols = [
+                        "Order_ID", "Style", "Colour", "Supplier_product_code", 
                         "Item_classification", "Supplier_name", "today_date", "Collection", 
                         "Colour_SKU", "Style_Merch_Season", "Batch", "barcode", "washing_code",
                         "EUR", "BGN", "BAM", "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name",
@@ -593,9 +594,11 @@ def pepco_section():
 
         st.success(
             f"Selected {len(uploaded_pdfs)} PDF(s). "
-            "Using first file for full data; others contribute Order_IDs."
+            "Using first file for full data; others contribute Order_IDs (merged into Order_ID)."
         )
-        st.markdown(f"**Other Order_IDs:** {concatenated_ids if concatenated_ids else '—'}")
+        if concatenated_ids:
+            st.markdown(f"**Extra Order_IDs (merged):** {concatenated_ids}")
+
         st.subheader(f"📄 Primary File: {getattr(primary_pdf, 'name', 'Unnamed')}")
         process_pepco_pdf(primary_pdf, extra_order_ids=concatenated_ids)
 
@@ -610,10 +613,6 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
-
-
-
-
 
 
 
