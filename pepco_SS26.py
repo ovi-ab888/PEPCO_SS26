@@ -65,44 +65,15 @@ from pepco_ui_hide_github import hide_github
 hide_github()          # শুধু GitHub hide
 # hide_github(True)    # পুরো toolbar hide করতে চাইলে
 
-st.markdown("""
-<style>
-/* App container width + padding */
-.block-container {max-width: 1120px; padding-top: 1rem; padding-bottom: 3rem;}
+st.markdown(
+    """
+    <div style="display:flex;justify-content:space-between;align-items:center;margin:-8px 0 6px 0">
+      <div><span class="chip">PEPCO</span> <span class="chip">v26</span></div>
+      <div style="opacity:.7;font-size:12px">Tips: Upload primary first; others add Order_ID</div>
+    </div>
+    """, unsafe_allow_html=True
+)
 
-/* Headings */
-h1, h2, h3 {font-weight: 700;}
-h1 {letter-spacing: .2px;}
-h2, h3 {letter-spacing: .1px;}
-
-/* Card look for all st containers */
-section[data-testid="stFileUploader"],
-div[data-testid="stDataFrameContainer"],
-div[data-baseweb="select"] > div,
-div[data-testid="stNumberInput"],
-div[role="radiogroup"],
-div[data-testid="stVerticalBlock"]:has(> div[data-testid="stDataEditor"]) {
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(255,255,255,.02);
-  border-radius: 14px;
-  padding: 12px 14px;
-  box-shadow: 0 1px 6px rgba(0,0,0,.08);
-}
-
-/* Buttons a bit bigger & rounded */
-.stButton > button {border-radius: 12px; padding: .55rem 1rem;}
-
-/* Badges (use with <span class="chip">text</span>) */
-.chip {
-  display:inline-flex; align-items:center; gap:.35rem;
-  padding:.15rem .55rem; border-radius:999px; font-size:12px;
-  background:rgba(125,125,255,.15); border:1px solid rgba(125,125,255,.25);
-}
-
-/* Tighten table rows slightly */
-[data-testid="stTable"] td, [data-testid="stTable"] th {padding:.4rem .6rem;}
-</style>
-""", unsafe_allow_html=True)
 
   
 
@@ -743,6 +714,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
