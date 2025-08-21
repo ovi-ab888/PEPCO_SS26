@@ -68,7 +68,7 @@ hide_github()          # শুধু GitHub hide
 st.markdown("""
 <style>
 /* App container width + padding */
-.block-container {max-width: 500px; padding-top: 1rem; padding-bottom: 3rem;}
+.block-container {max-width: 800px; padding-top: 1rem; padding-bottom: 3rem;}
 
 /* Headings */
 h1, h2, h3 {font-weight: 700;}
@@ -742,6 +742,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
