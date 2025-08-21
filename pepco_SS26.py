@@ -523,12 +523,17 @@ def process_pepco_pdf(uploaded_pdf):
 
 def pepco_section():
     st.subheader("PEPCO Data Processing")
-    uploaded_pdf = st.file_uploader(
+    uploaded_pdfs =  st.file_uploader(
         "Upload PEPCO Data file",
         type=["pdf"],
         key="pepco_unique_uploader"
-    )
-    if uploaded_pdf:
+    , accept_multiple_files=True)
+    if uploaded_pdfs:
+    if not isinstance(uploaded_pdfs, list):
+        uploaded_pdfs = [uploaded_pdfs]
+    st.success(f"Selected {len(uploaded_pdfs)} PDF(s).")
+    for i, uploaded_pdf in enumerate(uploaded_pdfs, start=1):
+        st.markdown(f"### 📄 File {i}: {getattr(uploaded_pdf, 'name', 'Unnamed')}")
         process_pepco_pdf(uploaded_pdf)
 
 def main():
@@ -540,8 +545,6 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
-
-
 
 
 
