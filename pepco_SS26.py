@@ -48,6 +48,31 @@ from datetime import datetime, timedelta
 import os
 import requests.utils
 
+
+import streamlit as st
+
+# 1) Page config + favicon (logo as URL)
+LOGO_URL = "https://brandfetch.com/pepco.pl?library=default&collection=logos&asset=iddVHvFsYB"
+
+st.set_page_config(
+    page_title="PEPCO Data Processor",
+    page_icon=LOGO_URL,   # ✅ favicon/tab icon from your URL
+    layout="wide"
+)
+
+# (optional) your CSS/theme goes here ...
+
+# 2) Header area: logo + title side-by-side
+left, right = st.columns([1, 10], vertical_alignment="center")
+with left:
+    st.image(LOGO_URL, width=48)  # 48–64 px usually looks nice
+with right:
+    st.markdown("<h1 style='margin-bottom:0'>PEPCO Data Processor</h1>", unsafe_allow_html=True)
+    st.caption("Internal tool • v26")
+
+
+
+
 st.set_page_config(page_title="PEPCO Data Processor", page_icon="🧾", layout="wide")
 st.markdown("""
 <style>
@@ -774,6 +799,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
