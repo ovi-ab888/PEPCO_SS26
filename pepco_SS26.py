@@ -65,25 +65,6 @@ from pepco_ui_hide_github import hide_github
 hide_github()          # শুধু GitHub hide
 # hide_github(True)    # পুরো toolbar hide করতে চাইলে
 
-tab1, tab2, tab3 = st.tabs(["📤 Upload", "⚙️ Options", "👀 Preview"])
-
-with tab1:
-    uploaded_pdfs = st.file_uploader("Upload PEPCO Data file", type=["pdf"], accept_multiple_files=True)
-
-with tab2:
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        dept = st.selectbox("Department", options=depts)
-    with c2:
-        product = st.selectbox("Product Type", options=products)
-    with c3:
-        washing = st.selectbox("Washing Code", list(WASHING_CODES.keys()))
-    materials = st.multiselect("Material(s)", options=all_materials)
-
-with tab3:
-    st.markdown("When you upload & select options, a live preview will appear here ↓")
-    preview_container = st.container()
-
 
 
 
@@ -726,6 +707,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
