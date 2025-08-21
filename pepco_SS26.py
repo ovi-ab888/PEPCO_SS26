@@ -67,26 +67,6 @@ COLLECTION_MAPPING = {
 
 # ========== HELPER FUNCTIONS ==========
 @st.cache_data(ttl=600)
-
-def extract_order_id_only(file):
-    """
-    Quickly open the PDF and return the Order_ID string if found, else None.
-    """
-    try:
-        doc = fitz.open(stream=file.read(), filetype="pdf")
-        if len(doc) < 1:
-            return None
-        page1 = doc[0].get_text()
-        m = re.search(r"Order\s*-\s*ID\s*\.{2,}\s*([A-Z0-9_+-]+)", page1, re.IGNORECASE)
-        # Reset file pointer for future reads
-        file.seek(0)
-        return m.group(1).strip() if m else None
-    except Exception:
-        try:
-            file.seek(0)
-        except Exception:
-            pass
-        return None
 def load_price_data():
     try:
         url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdAQmBHwDEWCgmLdEdJc0HsFYpPSyERPHLwmr2tnTYU1BDWdBD6I0ZYfEDzataX0wTNhfLfnm-Te6w/pub?gid=583402611&single=true&output=csv"
@@ -348,6 +328,39 @@ def extract_colour_from_page2(text, page_number=1):
         st.error(f"Error extracting colour: {str(e)}")
         return "UNKNOWN"
 
+def extract_order_id_only(file):
+    """
+    Return the Order_ID found on page 1 ("Order - ID .... <id>"), else None.
+    The regex is lenient to allow underscores/suffixes like _01.
+    """
+    try:
+        # Ensure pointer at start
+        try:
+            file.seek(0)
+        except Exception:
+            pass
+        doc = fitz.open(stream=file.read(), filetype="pdf")
+        if len(doc) < 1:
+            try:
+                file.seek(0)
+            except Exception:
+                pass
+            return None
+        page1 = doc[0].get_text()
+        # Allow letters/digits/underscore/plus/hyphen suffixes
+        m = re.search(r"Order\s*-\s*ID\s*\.{2,}\s*([A-Z0-9_+-]+)", page1, re.IGNORECASE)
+        try:
+            file.seek(0)
+        except Exception:
+            pass
+        return m.group(1).strip() if m else None
+    except Exception:
+        try:
+            file.seek(0)
+        except Exception:
+            pass
+        return None
+
 def extract_data_from_pdf(file):
     try:
         doc = fitz.open(stream=file.read(), filetype="pdf")
@@ -478,10 +491,8 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
             )
 
             df = pd.DataFrame(result_data)
-            if extra_order_ids:
-                df['Other_Order_IDs'] = extra_order_ids
-            else:
-                df['Other_Order_IDs'] = ''
+            # Add concatenated Order_IDs from other PDFs
+            df['Other_Order_IDs'] = (extra_order_ids or '')
             df['Dept'] = df['Item_classification'].apply(get_dept_value)
             df['Cotton'] = cotton_value
             df['Collection'] = df.apply(lambda row: modify_collection(row['Collection'], row['Item_classification']), axis=1)
@@ -553,11 +564,11 @@ def pepco_section():
     )
 
     if uploaded_pdfs:
-        # Normalize always to list
+        # Normalize to list
         if not isinstance(uploaded_pdfs, list):
             uploaded_pdfs = [uploaded_pdfs]
 
-        # First file = primary
+        # First file is primary for full extraction
         primary_pdf = uploaded_pdfs[0]
         others = uploaded_pdfs[1:]
 
@@ -582,22 +593,21 @@ def pepco_section():
             f"Selected {len(uploaded_pdfs)} PDF(s). "
             "Using first file for full data; others contribute Order_IDs."
         )
-        st.markdown(
-            f"**Other Order_IDs:** {concatenated_ids if concatenated_ids else '—'}"
-        )
-
+        st.markdown(f"**Other Order_IDs:** {concatenated_ids if concatenated_ids else '—'}")
         st.subheader(f"📄 Primary File: {getattr(primary_pdf, 'name', 'Unnamed')}")
         process_pepco_pdf(primary_pdf, extra_order_ids=concatenated_ids)
 
 
+
+def main():
+    st.title("PEPCO Data Processor")
+    pepco_section()
 
 if __name__ == "__main__":
     main()
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
-
-
 
 
 
