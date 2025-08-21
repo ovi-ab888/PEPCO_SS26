@@ -86,7 +86,7 @@ div[data-testid="stVerticalBlock"]:has(> div[data-testid="stDataEditor"]) {
   background: rgba(255,255,255,.02);
   border-radius: 14px;
   padding: 12px 14px;
-  box-shadow: 0 1px 6px rgba(0,0,0,.08);
+  box-shadow: 0 1px 6px rgba(0,0,0,.100);
 }
 
 /* Buttons a bit bigger & rounded */
@@ -742,6 +742,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
