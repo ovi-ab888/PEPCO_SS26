@@ -70,39 +70,72 @@ st.markdown("""
 /* App container width + padding */
 .block-container {max-width: 800px; padding-top: 1rem; padding-bottom: 3rem;}
 
-/* Headings */
-h1, h2, h3 {font-weight: 700;}
-h1 {letter-spacing: .2px;}
-h2, h3 {letter-spacing: .1px;}
+st.markdown("""
+<style>
+:root{
+  /* tweak-able tokens */
+  --card-bg: rgba(255,255,255,.04);
+  --card-br: rgba(255,255,255,.12);
+  --input-bg: rgba(255,255,255,.08);     /* a bit lighter so text pops */
+  --input-br: rgba(255,255,255,.25);
+  --txt:      #E9ECF6;                   /* control text */
+  --muted:    #C2C8DF;                   /* placeholder/help */
+}
 
-/* Card look for all st containers */
+/* Container width + vertical rhythm */
+.block-container{max-width:1120px; padding-top:1rem; padding-bottom:3rem;}
+
+/* Headings */
+h1,h2,h3{font-weight:700;}
+h1{letter-spacing:.2px;} h2,h3{letter-spacing:.1px;}
+
+/* Card look for big widgets */
 section[data-testid="stFileUploader"],
 div[data-testid="stDataFrameContainer"],
-div[data-baseweb="select"] > div,
-div[data-testid="stNumberInput"],
-div[role="radiogroup"],
-div[data-testid="stVerticalBlock"]:has(> div[data-testid="stDataEditor"]) {
-  border: 1px solid rgba(255,255,255,.06);
-  background: rgba(255,255,255,.02);
-  border-radius: 14px;
-  padding: 12px 14px;
-  box-shadow: 0 1px 6px rgba(125,125,255,.15);
+div[data-testid="stVerticalBlock"]:has(> div[data-testid="stDataEditor"]){
+  background:var(--card-bg)!important; border:1px solid var(--card-br)!important;
+  border-radius:14px!important; padding:12px 14px; box-shadow:0 1px 8px rgba(0,0,0,.12);
 }
 
-/* Buttons a bit bigger & rounded */
-.stButton > button {border-radius: 12px; padding: .55rem 1rem;}
-
-/* Badges (use with <span class="chip">text</span>) */
-.chip {
-  display:inline-flex; align-items:center; gap:.35rem;
-  padding:.15rem .55rem; border-radius:999px; font-size:12px;
-  background:rgba(125,125,255,.15); border:1px solid rgba(125,125,255,.25);
+/* Labels */
+label, .stMultiSelect label, .stSelectbox label, .stNumberInput label, .stTextInput label{
+  color:var(--txt)!important; font-weight:500;
 }
 
-/* Tighten table rows slightly */
-[data-testid="stTable"] td, [data-testid="stTable"] th {padding:.4rem .6rem;}
+/* --- Inputs: text/number/textarea --- */
+input, textarea{
+  color:var(--txt)!important;
+  background:var(--input-bg)!important;
+  border-color:var(--input-br)!important;
+}
+input::placeholder, textarea::placeholder{ color:var(--muted)!important; opacity:.95; }
+
+/* --- BaseWeb Select (selectbox/multiselect) --- */
+div[data-baseweb="select"] > div{        /* the visible control */
+  background:var(--input-bg)!important;
+  border-color:var(--input-br)!important;
+  border-radius:12px!important;
+}
+div[data-baseweb="select"] input{        /* the text inside select */
+  color:var(--txt)!important;
+}
+div[data-baseweb="select"] svg{ opacity:.9; }  /* caret/icons */
+
+/* --- Number input inner field --- */
+div[data-testid="stNumberInput"] input{
+  color:var(--txt)!important;
+  background:var(--input-bg)!important;
+  border-color:var(--input-br)!important;
+}
+
+/* Buttons a bit nicer */
+.stButton > button{ border-radius:12px; padding:.55rem 1rem; }
+
+/* Table spacing */
+[data-testid="stTable"] td,[data-testid="stTable"] th{ padding:.45rem .6rem; }
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # ========== CONSTANTS AND MAPPINGS ==========
@@ -742,6 +775,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
