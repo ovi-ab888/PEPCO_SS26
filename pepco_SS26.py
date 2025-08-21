@@ -542,6 +542,46 @@ st.markdown("---")
 st.caption("This app developed by Ovi")
 
 
+# -*- coding: utf-8 -*-
+import streamlit as st
+from pathlib import Path
+
+# Import the single-file processing function from your existing app
+# Assumes pepco_SS26.py is in the same directory and defines process_pepco_pdf(uploaded_pdf)
+from pepco_SS26 import process_pepco_pdf
+
+st.set_page_config(page_title="PEPCO Multi-PDF Uploader", page_icon="🧾", layout="wide")
+
+st.title("PEPCO Processor — Multiple PDFs")
+st.caption("Enhanced wrapper that lets you upload and process multiple PEPCO PDFs in one go.")
+
+st.markdown("**Tip:** You can still run your original app. This file only adds multi-upload on top of it.")
+
+uploaded_pdfs = st.file_uploader(
+    "Upload one or more PEPCO PDFs",
+    type=["pdf"],
+    accept_multiple_files=True,
+    help="Select multiple files at once or drag & drop them together."
+)
+
+per_file_expanders = st.checkbox("Show results in separate collapsible panels", value=True)
+
+if uploaded_pdfs:
+    st.success(f"Selected {len(uploaded_pdfs)} PDF(s).")
+    for i, pdf in enumerate(uploaded_pdfs, start=1):
+        header = f"📄 File {i}: {getattr(pdf, 'name', 'Unnamed')}"
+
+        if per_file_expanders:
+            with st.expander(header, expanded=False):
+                # Reuse your existing single-file pipeline.
+                process_pepco_pdf(pdf)
+        else:
+            st.subheader(header)
+            process_pepco_pdf(pdf)
+else:
+    st.info("No files uploaded yet. Use the uploader above.")
+
+
 
 
 
