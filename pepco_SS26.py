@@ -492,8 +492,11 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
 
             df = pd.DataFrame(result_data)
             # Add concatenated Order_IDs from other PDFs
-            if extra_order_ids:
+           df = pd.DataFrame(result_data)
+
+if extra_order_ids:
     df['Order_ID'] = df['Order_ID'].astype(str) + "+" + extra_order_ids
+
             df['Dept'] = df['Item_classification'].apply(get_dept_value)
             df['Cotton'] = cotton_value
             df['Collection'] = df.apply(lambda row: modify_collection(row['Collection'], row['Item_classification']), axis=1)
@@ -609,6 +612,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
