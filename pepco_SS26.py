@@ -13,11 +13,6 @@ elif os.path.exists(LOGO_SVG):
     page_icon = LOGO_SVG   # note: kichu browser svg favicon na-o dekhate pare
 else:
     page_icon = "🧾"
-
-st.set_page_config(
-    page_title="PEPCO Data Processor",
-    page_icon=page_icon,
-    layout="wide",
 )
 
 # Header: logo + title
@@ -815,6 +810,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
