@@ -25,9 +25,6 @@ with left:
     else:
         st.markdown("<div style='font-size:40px'>🧾</div>", unsafe_allow_html=True)
 
-with right:
-    st.markdown("<h1 style='margin-bottom:0'>PEPCO Data Processor</h1>", unsafe_allow_html=True)
-
 
 
 # -*- coding: utf-8 -*-
@@ -810,6 +807,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
