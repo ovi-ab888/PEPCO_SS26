@@ -74,6 +74,15 @@ st.markdown(
     """, unsafe_allow_html=True
 )
 
+left, right = st.columns([1.1, 1])
+with left:
+    dept = st.selectbox("Select Department", options=depts, index=0)
+    product = st.selectbox("Select Product Type", options=products, index=0)
+with right:
+    materials = st.multiselect("Select Material(s)", options=all_materials, default=[])
+    washing = st.selectbox("Select Washing Code", list(WASHING_CODES.keys()))
+
+
 
   
 
@@ -714,6 +723,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
