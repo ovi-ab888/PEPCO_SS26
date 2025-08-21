@@ -545,51 +545,57 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
 
 def pepco_section():
     st.subheader("PEPCO Data Processing")
-    uploaded_pdfs =  st.file_uploader(
+    uploaded_pdfs = st.file_uploader(
         "Upload PEPCO Data file",
         type=["pdf"],
-        key="pepco_unique_uploader"
-    , accept_multiple_files=True)
+        key="pepco_unique_uploader",
+        accept_multiple_files=True
+    )
+
     if uploaded_pdfs:
-    # Normalize to list
-    if not isinstance(uploaded_pdfs, list):
-        uploaded_pdfs = [uploaded_pdfs]
+        # Normalize always to list
+        if not isinstance(uploaded_pdfs, list):
+            uploaded_pdfs = [uploaded_pdfs]
 
-    primary_pdf = uploaded_pdfs[0]
-    others = uploaded_pdfs[1:]
+        # First file = primary
+        primary_pdf = uploaded_pdfs[0]
+        others = uploaded_pdfs[1:]
 
-    # Collect only Order_ID from the remaining PDFs
-    other_ids = []
-    for f in others:
-        try:
-            # Make sure each file's pointer is at start
-            f.seek(0)
-        except Exception:
-            pass
-        oid = extract_order_id_only(f)
-        if oid:
-            other_ids.append(oid)
-        # Reset again so future reads are safe
-        try:
-            f.seek(0)
-        except Exception:
-            pass
+        # Collect Order_ID only from other PDFs
+        other_ids = []
+        for f in others:
+            try:
+                f.seek(0)
+            except Exception:
+                pass
+            oid = extract_order_id_only(f)
+            if oid:
+                other_ids.append(oid)
+            try:
+                f.seek(0)
+            except Exception:
+                pass
 
-    concatenated_ids = "+".join(other_ids) if other_ids else ""
+        concatenated_ids = "+".join(other_ids) if other_ids else ""
 
-    st.success(f"Selected {len(uploaded_pdfs)} PDF(s). Using first file for full data; others contribute Order_IDs.")
-    st.markdown(f"**Other Order_IDs:** {concatenated_ids if concatenated_ids else '—'}")
+        st.success(
+            f"Selected {len(uploaded_pdfs)} PDF(s). "
+            "Using first file for full data; others contribute Order_IDs."
+        )
+        st.markdown(
+            f"**Other Order_IDs:** {concatenated_ids if concatenated_ids else '—'}"
+        )
 
-    st.subheader(f"📄 Primary File: {getattr(primary_pdf, 'name', 'Unnamed')}")
-    process_pepco_pdf(primary_pdf, extra_order_ids=concatenated_ids)def main():
-    st.title("PEPCO Data Processor")
-    pepco_section()
+        st.subheader(f"📄 Primary File: {getattr(primary_pdf, 'name', 'Unnamed')}")
+        process_pepco_pdf(primary_pdf, extra_order_ids=concatenated_ids)
+
 
 if __name__ == "__main__":
     main()
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
