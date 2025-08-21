@@ -65,21 +65,20 @@ from pepco_ui_hide_github import hide_github
 hide_github()          # শুধু GitHub hide
 # hide_github(True)    # পুরো toolbar hide করতে চাইলে
 
-st.markdown("""
-<style>
-/* App container width + padding */
-.block-container {max-width: 800px; padding-top: 1rem; padding-bottom: 3rem;}
+import streamlit as st
 
-st.markdown("""
+st.set_page_config(page_title="PEPCO Data Processor", page_icon="🧾", layout="wide")
+
+# —— Global polish CSS (must live inside a triple-quoted string) ——
+THEME_CSS = """
 <style>
 :root{
-  /* tweak-able tokens */
   --card-bg: rgba(255,255,255,.04);
   --card-br: rgba(255,255,255,.12);
-  --input-bg: rgba(255,255,255,.08);     /* a bit lighter so text pops */
+  --input-bg: rgba(255,255,255,.08);
   --input-br: rgba(255,255,255,.25);
-  --txt:      #E9ECF6;                   /* control text */
-  --muted:    #C2C8DF;                   /* placeholder/help */
+  --txt:      #E9ECF6;
+  --muted:    #C2C8DF;
 }
 
 /* Container width + vertical rhythm */
@@ -102,7 +101,7 @@ label, .stMultiSelect label, .stSelectbox label, .stNumberInput label, .stTextIn
   color:var(--txt)!important; font-weight:500;
 }
 
-/* --- Inputs: text/number/textarea --- */
+/* Text/number/textarea */
 input, textarea{
   color:var(--txt)!important;
   background:var(--input-bg)!important;
@@ -110,31 +109,31 @@ input, textarea{
 }
 input::placeholder, textarea::placeholder{ color:var(--muted)!important; opacity:.95; }
 
-/* --- BaseWeb Select (selectbox/multiselect) --- */
-div[data-baseweb="select"] > div{        /* the visible control */
+/* Select & multiselect */
+div[data-baseweb="select"] > div{
   background:var(--input-bg)!important;
   border-color:var(--input-br)!important;
   border-radius:12px!important;
 }
-div[data-baseweb="select"] input{        /* the text inside select */
-  color:var(--txt)!important;
-}
-div[data-baseweb="select"] svg{ opacity:.9; }  /* caret/icons */
+div[data-baseweb="select"] input{ color:var(--txt)!important; }
+div[data-baseweb="select"] svg{ opacity:.9; }
 
-/* --- Number input inner field --- */
+/* Number input inner field */
 div[data-testid="stNumberInput"] input{
   color:var(--txt)!important;
   background:var(--input-bg)!important;
   border-color:var(--input-br)!important;
 }
 
-/* Buttons a bit nicer */
+/* Buttons */
 .stButton > button{ border-radius:12px; padding:.55rem 1rem; }
 
 /* Table spacing */
 [data-testid="stTable"] td,[data-testid="stTable"] th{ padding:.45rem .6rem; }
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(THEME_CSS, unsafe_allow_html=True)
+
 
 
 
@@ -775,6 +774,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
