@@ -48,6 +48,9 @@ from datetime import datetime, timedelta
 import os
 import requests.utils
 
+st.set_page_config(page_title="PEPCO Data Processor", page_icon="🧾", layout="wide")
+import pepco_ui_hide_github   # GitHub আইকন hide—এই লাইনে CSS inject হয়
+
 # ========== CONSTANTS AND MAPPINGS ==========
 WASHING_CODES = {
     '1': '১২৩৪৫',
@@ -685,6 +688,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
