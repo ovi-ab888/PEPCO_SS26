@@ -65,22 +65,25 @@ from pepco_ui_hide_github import hide_github
 hide_github()          # শুধু GitHub hide
 # hide_github(True)    # পুরো toolbar hide করতে চাইলে
 
-st.markdown(
-    """
-    <div style="display:flex;justify-content:space-between;align-items:center;margin:-8px 0 6px 0">
-      <div><span class="chip">PEPCO</span> <span class="chip">v26</span></div>
-      <div style="opacity:.7;font-size:12px">Tips: Upload primary first; others add Order_ID</div>
-    </div>
-    """, unsafe_allow_html=True
-)
+tab1, tab2, tab3 = st.tabs(["📤 Upload", "⚙️ Options", "👀 Preview"])
 
-left, right = st.columns([1.1, 1])
-with left:
-    dept = st.selectbox("Select Department", options=depts, index=0)
-    product = st.selectbox("Select Product Type", options=products, index=0)
-with right:
-    materials = st.multiselect("Select Material(s)", options=all_materials, default=[])
-    washing = st.selectbox("Select Washing Code", list(WASHING_CODES.keys()))
+with tab1:
+    uploaded_pdfs = st.file_uploader("Upload PEPCO Data file", type=["pdf"], accept_multiple_files=True)
+
+with tab2:
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        dept = st.selectbox("Department", options=depts)
+    with c2:
+        product = st.selectbox("Product Type", options=products)
+    with c3:
+        washing = st.selectbox("Washing Code", list(WASHING_CODES.keys()))
+    materials = st.multiselect("Material(s)", options=all_materials)
+
+with tab3:
+    st.markdown("When you upload & select options, a live preview will appear here ↓")
+    preview_container = st.container()
+
 
 
 
@@ -723,6 +726,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
