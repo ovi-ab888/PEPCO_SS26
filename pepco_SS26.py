@@ -24,7 +24,7 @@ st.set_page_config(
 left, right = st.columns([1, 10], vertical_alignment="center")
 with left:
     if os.path.exists(LOGO_SVG):
-        st.image(LOGO_SVG, width=250)       # prefer svg in header
+        st.image(LOGO_SVG, width=500)       # prefer svg in header
     elif os.path.exists(LOGO_PNG):
         st.image(LOGO_PNG, width=52)
     else:
@@ -816,6 +816,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
