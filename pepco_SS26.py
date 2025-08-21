@@ -67,6 +67,26 @@ COLLECTION_MAPPING = {
 
 # ========== HELPER FUNCTIONS ==========
 @st.cache_data(ttl=600)
+
+def extract_order_id_only(file):
+    """
+    Quickly open the PDF and return the Order_ID string if found, else None.
+    """
+    try:
+        doc = fitz.open(stream=file.read(), filetype="pdf")
+        if len(doc) < 1:
+            return None
+        page1 = doc[0].get_text()
+        m = re.search(r"Order\s*-\s*ID\s*\.{2,}\s*([A-Z0-9_+-]+)", page1, re.IGNORECASE)
+        # Reset file pointer for future reads
+        file.seek(0)
+        return m.group(1).strip() if m else None
+    except Exception:
+        try:
+            file.seek(0)
+        except Exception:
+            pass
+        return None
 def load_price_data():
     try:
         url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdAQmBHwDEWCgmLdEdJc0HsFYpPSyERPHLwmr2tnTYU1BDWdBD6I0ZYfEDzataX0wTNhfLfnm-Te6w/pub?gid=583402611&single=true&output=csv"
@@ -401,7 +421,7 @@ def extract_data_from_pdf(file):
         st.error(f"PDF error: {str(e)}")
         return None
 
-def process_pepco_pdf(uploaded_pdf):
+def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
     translations_df = load_product_translations()
     material_translations_df = load_material_translations()
     
@@ -458,7 +478,10 @@ def process_pepco_pdf(uploaded_pdf):
             )
 
             df = pd.DataFrame(result_data)
-            
+            if extra_order_ids:
+                df['Other_Order_IDs'] = extra_order_ids
+            else:
+                df['Other_Order_IDs'] = ''
             df['Dept'] = df['Item_classification'].apply(get_dept_value)
             df['Cotton'] = cotton_value
             df['Collection'] = df.apply(lambda row: modify_collection(row['Collection'], row['Item_classification']), axis=1)
@@ -493,8 +516,7 @@ def process_pepco_pdf(uploaded_pdf):
                         df[cur] = currency_values.get(cur, "")
                     df['PLN'] = format_number(pln_price, 'PLN')
 
-                    final_cols = [
-                        "Order_ID", "Style", "Colour", "Supplier_product_code", 
+                    final_cols = ["Order_ID", "Other_Order_IDs", "Style", "Colour", "Supplier_product_code", 
                         "Item_classification", "Supplier_name", "today_date", "Collection", 
                         "Colour_SKU", "Style_Merch_Season", "Batch", "barcode", "washing_code",
                         "EUR", "BGN", "BAM", "PLN", "RON", "CZK", "MKD", "RSD", "HUF", "product_name",
@@ -523,24 +545,43 @@ def process_pepco_pdf(uploaded_pdf):
 
 def pepco_section():
     st.subheader("PEPCO Data Processing")
-    uploaded_pdfs = st.file_uploader(
+    uploaded_pdfs =  st.file_uploader(
         "Upload PEPCO Data file",
         type=["pdf"],
-        key="pepco_unique_uploader",
-        accept_multiple_files=True
-    )
-
+        key="pepco_unique_uploader"
+    , accept_multiple_files=True)
     if uploaded_pdfs:
-        # Ensure always list
-        if not isinstance(uploaded_pdfs, list):
-            uploaded_pdfs = [uploaded_pdfs]
+    # Normalize to list
+    if not isinstance(uploaded_pdfs, list):
+        uploaded_pdfs = [uploaded_pdfs]
 
-        st.success(f"Selected {len(uploaded_pdfs)} PDF(s).")
+    primary_pdf = uploaded_pdfs[0]
+    others = uploaded_pdfs[1:]
 
-        for i, uploaded_pdf in enumerate(uploaded_pdfs, start=1):
-            st.markdown(f"### 📄 File {i}: {getattr(uploaded_pdf, 'name', 'Unnamed')}")
-            process_pepco_pdf(uploaded_pdf)
-def main():
+    # Collect only Order_ID from the remaining PDFs
+    other_ids = []
+    for f in others:
+        try:
+            # Make sure each file's pointer is at start
+            f.seek(0)
+        except Exception:
+            pass
+        oid = extract_order_id_only(f)
+        if oid:
+            other_ids.append(oid)
+        # Reset again so future reads are safe
+        try:
+            f.seek(0)
+        except Exception:
+            pass
+
+    concatenated_ids = "+".join(other_ids) if other_ids else ""
+
+    st.success(f"Selected {len(uploaded_pdfs)} PDF(s). Using first file for full data; others contribute Order_IDs.")
+    st.markdown(f"**Other Order_IDs:** {concatenated_ids if concatenated_ids else '—'}")
+
+    st.subheader(f"📄 Primary File: {getattr(primary_pdf, 'name', 'Unnamed')}")
+    process_pepco_pdf(primary_pdf, extra_order_ids=concatenated_ids)def main():
     st.title("PEPCO Data Processor")
     pepco_section()
 
@@ -549,7 +590,6 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
-
 
 
 
