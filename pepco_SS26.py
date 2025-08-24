@@ -63,7 +63,7 @@ def check_password():
 
     st.text_input("Password", type="password", key="password", on_change=_password_entered)
     if st.session_state.get("password_correct") is False:
-        st.error("Incorrect password Please contact ovi")
+        st.error("Your password Incorrect,  Please contact Mr. Ovi")
     return False
 # --- End password gate ---
 
@@ -799,6 +799,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
