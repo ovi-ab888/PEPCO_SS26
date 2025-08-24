@@ -22,7 +22,7 @@ with left:
     elif os.path.exists(LOGO_PNG):
         st.image(LOGO_PNG, width=300)
     else:
-        st.markdown("<div style='font-size:40px'>🧾</div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:40px'>🏷️</div>", unsafe_allow_html=True)
         
 
 # ==================== PASSWORD ====================
@@ -799,6 +799,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
