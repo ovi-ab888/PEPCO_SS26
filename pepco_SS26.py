@@ -701,17 +701,23 @@ def process_pepco_pdf(uploaded_pdf, extra_order_ids: str | None = None):
 
             df['washing_code'] = WASHING_CODES[washing_code]
 
-            pln_price = st.number_input(
-                "Enter PLN Price",
-                min_value=0.0,
-                step=0.01,
-                format="%.2f",
-                key="pepco_pln_price"
-            )
+            # --- PLN input: text_input + validation (supports 3+ digits, comma or dot) ---
+            pln_price_raw = st.text_input("Enter PLN Price", key="pepco_pln_price")
 
-            if pln_price:
+            pln_price = None
+            if pln_price_raw.strip():
+                try:
+                    pln_price = float(pln_price_raw.replace(",", "."))
+                    if pln_price < 0:
+                        st.error("❌ Price can’t be negative.")
+                        pln_price = None
+                except ValueError:
+                    st.error("❌ Please enter a valid number like 12.50 or 12,50")
+                    pln_price = None
+
+            # Proceed only when a valid number is entered (including 0.00)
+            if pln_price is not None:
                 currency_values = find_closest_price(pln_price)
-
                 if currency_values:
                     for cur in ['EUR', 'BGN', 'BAM', 'RON', 'CZK', 'MKD', 'RSD', 'HUF']:
                         df[cur] = currency_values.get(cur, "")
@@ -799,6 +805,7 @@ if __name__ == "__main__":
 
 st.markdown("---")
 st.caption("This app developed by Ovi")
+
 
 
 
